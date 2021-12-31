@@ -4,23 +4,31 @@ import           PlatformRunner.Settings.Types  ( Settings )
 import           RIO
 import           RIO.Process
 
+-- TODO use TemplateHaskell for Display instances
+
+-- | Represents the app's possible CLI Options. Used by Optparse Simple
 data CliOptions = CliOptions
   { optionsVerbose          :: !Bool
   , optionsOverrideSettings :: !(Maybe FilePath)
   }
   deriving Show
 
+-- | Represents the basic environment of the app, available immediately
+-- on entry into main
 data AppEnv = AppEnv
   { appLogFunc        :: !LogFunc
   , appProcessContext :: !ProcessContext
   , appCliOptions     :: !CliOptions
   }
 
+-- | Represents the basic configuration available to the app without reading
+-- any particular files
 data AppBaseConfig = AppBaseConfig
   { appEnv       :: !AppEnv
   , appConfigDir :: !FilePath
   }
 
+-- | Represents the complete environment required to run the app
 data App = App
   { appBaseConfig  :: !AppBaseConfig
   , appSettingsRef :: !(SomeRef Settings)
