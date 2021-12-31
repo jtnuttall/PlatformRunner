@@ -1,0 +1,112 @@
+name: PlatformRunner
+version: 0.1.0.0
+github: jtnuttall/PlatformRunner
+license: GPL-2
+author: Jeremy Nuttall
+maintainer: jeremy@jeremy-nuttall.com
+copyright: 2021 Jeremy Nuttall
+
+extra-source-files:
+  - README.md
+  - ChangeLog.md
+
+# Metadata used when publishing your package
+synopsis: Simple platformer
+category: Game
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description: Please see the README on Github at <https://github.com/jtnuttall/PlatformRunner#readme>
+
+dependencies:
+  - base >= 4.11 && < 10
+  - rio >= 0.1.12.0
+  - lens >= 4.19 && < 5
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wpartial-fields
+  - -Wredundant-constraints
+
+library:
+  source-dirs: src
+  dependencies:
+    - apecs >= 0.9 && < 1.0
+    - apecs-physics >= 0.4 && < 0.5
+    - apecs-gloss >= 0.2 && < 0.3
+    - linear == 1.21.*
+    - aeson >= 1.5 && < 2
+    - mwc-random >= 0.15 && < 0.16
+    - yaml
+    - template-haskell
+  default-extensions:
+    - AutoDeriveTypeable
+    - BangPatterns
+    - BinaryLiterals
+    - ConstraintKinds
+    - DataKinds
+    - DefaultSignatures
+    - DeriveDataTypeable
+    - DeriveFoldable
+    - DeriveFunctor
+    - DeriveGeneric
+    - DeriveTraversable
+    - DoAndIfThenElse
+    - EmptyDataDecls
+    - ExistentialQuantification
+    - FlexibleContexts
+    - FlexibleInstances
+    - FunctionalDependencies
+    - GADTs
+    - GeneralizedNewtypeDeriving
+    - InstanceSigs
+    - KindSignatures
+    - LambdaCase
+    - MonadFailDesugaring
+    - MultiParamTypeClasses
+    - MultiWayIf
+    - NamedFieldPuns
+    - NoImplicitPrelude
+    - OverloadedStrings
+    - PartialTypeSignatures
+    - PatternGuards
+    - PolyKinds
+    - RankNTypes
+    - RecordWildCards
+    - ScopedTypeVariables
+    - StandaloneDeriving
+    - TupleSections
+    - TypeFamilies
+    - TypeSynonymInstances
+    - ViewPatterns
+
+executables:
+  PlatformRunner-exe:
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+      - PlatformRunner
+      - optparse-simple
+
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+
+tests:
+  PlatformRunner-test:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+      - PlatformRunner
+      - hspec
+
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
