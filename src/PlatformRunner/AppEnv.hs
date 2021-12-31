@@ -22,8 +22,8 @@ data AppBaseConfig = AppBaseConfig
   }
 
 data App = App
-  { appBaseConfig :: !AppBaseConfig
-  , appSettings   :: Settings
+  { appBaseConfig  :: !AppBaseConfig
+  , appSettingsRef :: !(SomeRef Settings)
   }
 
 -- HasAppEnv
@@ -96,14 +96,14 @@ instance HasAppBaseConfig App where
   appBaseConfigL = lens appBaseConfig (\x y -> x { appBaseConfig = y })
 
 -- HasAppSettings
-class HasAppSettings env where
-  appSettingsL :: Lens' env Settings
+class HasAppSettingsRef env where
+  appSettingsRefL :: Lens' env (SomeRef Settings)
 
-instance HasAppSettings Settings where
-  appSettingsL = id
+instance HasAppSettingsRef (SomeRef Settings) where
+  appSettingsRefL = id
 
-instance HasAppSettings App where
-  appSettingsL = lens appSettings (\x y -> x { appSettings = y })
+instance HasAppSettingsRef App where
+  appSettingsRefL = lens appSettingsRef (\x y -> x { appSettingsRef = y })
 
 -- HasLogFunc
 instance HasLogFunc AppEnv where

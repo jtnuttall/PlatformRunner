@@ -64,5 +64,6 @@ main = do
     case appSettings of
       Left except -> fail $ show except -- TODO handle errors with retry
       Right settings ->
-        let app = App { appBaseConfig = appBaseConfig, appSettings = settings }
-        in  runRIO app runApp
+        newSomeRef settings >>= \appSettingsRef ->
+          let app = App { appBaseConfig = appBaseConfig, appSettingsRef = appSettingsRef }
+          in  runRIO app runApp

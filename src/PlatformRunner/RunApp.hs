@@ -4,12 +4,11 @@ module PlatformRunner.RunApp
 
 import           PlatformRunner.AppEnv
 import           PlatformRunner.Import
-import           PlatformRunner.Settings.IO     ( readOrCreateAppSettings )
 
 runApp :: RIO App ()
 runApp = do
   cliOptions <- view appCliOptionsL
-  settings   <- view appSettingsL
+  settings   <- readSomeRef =<< view appSettingsRefL
 
   logInfo $ displayShow settings
   logInfo $ displayShow cliOptions
