@@ -34,7 +34,7 @@ data App = App
   , appSettingsRef :: !(SomeRef Settings)
   }
 
--- HasAppEnv
+-- | HasAppEnv constrains any env that has the basic environment variables
 class HasAppEnv env where
   appEnvL :: Lens' env AppEnv
 
@@ -47,7 +47,8 @@ instance HasAppEnv AppBaseConfig where
 instance HasAppEnv App where
   appEnvL = appBaseConfigL . appEnvL
 
--- HasCliOptions
+-- | HasCliOptions constrains any env that contains the CLI options described
+-- by the app
 class HasAppCliOptions env where
   appCliOptionsL :: Lens' env CliOptions
 

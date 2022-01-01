@@ -62,8 +62,10 @@ main = do
     appSettings <- runRIO appBaseConfig readOrCreateAppSettings
 
     case appSettings of
-      Left except -> fail $ show except -- TODO handle errors with retry
-      Right settings ->
-        newSomeRef settings >>= \appSettingsRef ->
-          let app = App { appBaseConfig = appBaseConfig, appSettingsRef = appSettingsRef }
-          in  runRIO app runApp
+      Left  except   -> fail $ show except -- TODO handle errors with retry?
+      Right settings -> newSomeRef settings >>= \appSettingsRef ->
+        let
+          app = App { appBaseConfig  = appBaseConfig
+                    , appSettingsRef = appSettingsRef
+                    }
+        in  runRIO app runApp

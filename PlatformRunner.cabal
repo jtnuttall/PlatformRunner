@@ -31,13 +31,16 @@ library
       PlatformRunner.Components.Entity
       PlatformRunner.Components.Global
       PlatformRunner.Components.Movement
+      PlatformRunner.Game.Constant
+      PlatformRunner.Game.Input
+      PlatformRunner.Game.Step
+      PlatformRunner.Game.World
       PlatformRunner.Import
       PlatformRunner.RunApp
       PlatformRunner.Settings.Defaults
       PlatformRunner.Settings.IO
       PlatformRunner.Settings.Types
       PlatformRunner.Utility.Math
-      PlatformRunner.World
   other-modules:
       Paths_PlatformRunner
   hs-source-dirs:

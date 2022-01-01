@@ -1,6 +1,5 @@
 module PlatformRunner.Components.Entity
-  ( Target(..)
-  , Particle(..)
+  ( Particle(..)
   , Coin(..)
   , Platform(..)
   , Player(..)
@@ -14,12 +13,6 @@ import           Apecs                          ( Component
 import           RIO                            ( Float
                                                 , Show
                                                 )
-
-data Target = Target
-  deriving Show
-
-instance Component Target where
-  type Storage Target = Map Target
 
 newtype Particle = Particle Float deriving Show
 
