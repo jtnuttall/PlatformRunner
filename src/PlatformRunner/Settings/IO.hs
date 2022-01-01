@@ -91,16 +91,14 @@ readSettings = do
   filePath <- getAppSettingsPath
   exists   <- doesFileExist filePath
   if exists
-    then do
-      contents <- liftIO $ decodeFileWithWarnings filePath
-
+    then
       bitraverse
-        (return . ParseException)
-        (\(warnings, settings) ->
-          mapM_ (logWarn . ("Yaml warning: " <>) . displayShow) warnings
-            >> return settings
-        )
-        contents
+          (return . ParseException)
+          (\(warnings, settings) ->
+            mapM_ (logWarn . ("Yaml warning: " <>) . displayShow) warnings
+              >> return settings
+          )
+        =<< liftIO (decodeFileWithWarnings filePath)
     else return $ Left FileDoesNotExist
 
 -- | Read the settings file specified by the environment, or create it if no such
