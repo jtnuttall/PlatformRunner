@@ -88,10 +88,11 @@ readSettings
      )
   => m (Either ReadException Settings)
 readSettings = do
-  filePath <- getAppSettingsPath
-  exists   <- doesFileExist filePath
-  if exists
-    then
+  filePath   <- getAppSettingsPath
+  fileExists <- doesFileExist filePath
+  if not fileExists
+    then return $ Left FileDoesNotExist
+    else
       bitraverse
           (return . ParseException)
           (\(warnings, settings) ->
@@ -99,7 +100,6 @@ readSettings = do
               >> return settings
           )
         =<< liftIO (decodeFileWithWarnings filePath)
-    else return $ Left FileDoesNotExist
 
 -- | Read the settings file specified by the environment, or create it if no such
 -- file can be found.
