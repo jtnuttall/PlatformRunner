@@ -27,7 +27,12 @@ instance Exception ReadException
 
 -- | Returns the filepath to the global settings file or the override path provided
 getAppSettingsPath
-  :: (HasAppConfigDir env, HasOptionsOverrideSettings env) => RIO env FilePath
+  :: ( HasAppConfigDir env
+     , HasOptionsOverrideSettings env
+     , MonadIO m
+     , MonadReader env m
+     )
+  => m FilePath
 getAppSettingsPath = do
   configDir        <- view appConfigDirL
   overrideFileName <- view optionsOverrideSettingsL
@@ -36,23 +41,32 @@ getAppSettingsPath = do
     Just fileName -> makeAbsolute fileName
     Nothing       -> return $ configDir </> defaultSettingsFileName
 
-getOrCreateAppConfigDir :: RIO env FilePath
+getOrCreateAppConfigDir :: (MonadIO m) => m FilePath
 getOrCreateAppConfigDir = do
   xdgConfigDir <- getXdgDirectory XdgConfig "" <&> (</> configFolderName)
   createDirectoryIfMissing False xdgConfigDir
   return xdgConfigDir
 
 writeSettings
-  :: (HasOptionsOverrideSettings env, HasAppConfigDir env)
+  :: ( HasOptionsOverrideSettings env
+     , HasAppConfigDir env
+     , MonadIO m
+     , MonadReader env m
+     )
   => Settings
-  -> RIO env ()
+  -> m ()
 writeSettings settings = do
   filePath <- getAppSettingsPath
   liftIO $ encodeFile filePath settings
 
 readSettings
-  :: (HasLogFunc env, HasOptionsOverrideSettings env, HasAppConfigDir env)
-  => RIO env (Either ReadException Settings)
+  :: ( HasLogFunc env
+     , HasOptionsOverrideSettings env
+     , HasAppConfigDir env
+     , MonadIO m
+     , MonadReader env m
+     )
+  => m (Either ReadException Settings)
 readSettings = do
   filePath <- getAppSettingsPath
   exists   <- doesFileExist filePath
@@ -70,8 +84,13 @@ readSettings = do
     else return $ Left FileDoesNotExist
 
 readOrCreateAppSettings
-  :: (HasAppConfigDir env, HasOptionsOverrideSettings env, HasLogFunc env)
-  => RIO env (Either ReadException Settings)
+  :: ( HasAppConfigDir env
+     , HasOptionsOverrideSettings env
+     , HasLogFunc env
+     , MonadIO m
+     , MonadReader env m
+     )
+  => m (Either ReadException Settings)
 readOrCreateAppSettings = do
   filePath   <- getAppSettingsPath
   fileExists <- doesFileExist filePath
