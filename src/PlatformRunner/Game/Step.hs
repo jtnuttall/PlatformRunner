@@ -2,17 +2,14 @@ module PlatformRunner.Game.Step where
 
 import           Apecs
 import           Linear
-import           PlatformRunner.AppEnv
+import           PlatformRunner.Env
 import           PlatformRunner.Game.Constant
 import           PlatformRunner.Import
-import           PlatformRunner.Settings.Types  ( Settings(..) )
 
 initializeSystem
-  :: (HasLogFunc env, HasAppSettingsRef env) => PlatformRunnerSystem env ()
+  :: (HasLogFunc env, HasGameConstantsRef env) => PlatformRunnerSystem env ()
 initializeSystem = do
-  settings <- lift $ readSomeRef =<< view appSettingsRefL
-  let constants = platformRunnerConstants (difficulty settings)
-
+  constants <- lift $ readSomeRef =<< view gameConstantsRefL
   lift $ logDebug $ "Initializing System with: " <> displayShow constants
 
   playerEty <- newEntity

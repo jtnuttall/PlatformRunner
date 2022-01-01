@@ -9,7 +9,7 @@ import           Data.Yaml                      ( ParseException
                                                 , decodeFileWithWarnings
                                                 , encodeFile
                                                 )
-import           PlatformRunner.AppEnv
+import           PlatformRunner.Env
 import           PlatformRunner.Import
 import           PlatformRunner.Settings.Defaults
 import           PlatformRunner.Settings.Types  ( Settings )

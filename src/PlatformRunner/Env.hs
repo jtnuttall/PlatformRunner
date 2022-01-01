@@ -1,5 +1,6 @@
-module PlatformRunner.AppEnv where
+module PlatformRunner.Env where
 
+import           PlatformRunner.Game.Constant   ( PlatformRunnerConstants )
 import           PlatformRunner.Settings.Types  ( Settings )
 import           RIO
 import           RIO.Process
@@ -29,9 +30,10 @@ data AppBaseConfig = AppBaseConfig
   }
 
 -- | Represents the complete environment required to run the app
-data App = App
-  { appBaseConfig  :: !AppBaseConfig
-  , appSettingsRef :: !(SomeRef Settings)
+data PlatformRunnerEnv = PlatformRunnerEnv
+  { appBaseConfig    :: !AppBaseConfig
+  , appSettingsRef   :: !(SomeRef Settings)
+  , gameConstantsRef :: !(SomeRef PlatformRunnerConstants)
   }
 
 -- | HasAppEnv constrains any env that has the basic environment variables
@@ -44,7 +46,7 @@ instance HasAppEnv AppEnv where
 instance HasAppEnv AppBaseConfig where
   appEnvL = lens appEnv (\x y -> x { appEnv = y })
 
-instance HasAppEnv App where
+instance HasAppEnv PlatformRunnerEnv where
   appEnvL = appBaseConfigL . appEnvL
 
 -- | HasCliOptions constrains any env that contains the CLI options described
@@ -61,7 +63,7 @@ instance HasAppCliOptions AppEnv where
 instance HasAppCliOptions AppBaseConfig where
   appCliOptionsL = appEnvL . appCliOptionsL
 
-instance HasAppCliOptions App where
+instance HasAppCliOptions PlatformRunnerEnv where
   appCliOptionsL = appEnvL . appCliOptionsL
 
 -- HasAppConfigDir
@@ -74,7 +76,7 @@ instance HasAppConfigDir FilePath where
 instance HasAppConfigDir AppBaseConfig where
   appConfigDirL = lens appConfigDir (\x y -> x { appConfigDir = y })
 
-instance HasAppConfigDir App where
+instance HasAppConfigDir PlatformRunnerEnv where
   appConfigDirL = appBaseConfigL . appConfigDirL
 
 -- HasSettingsFileName
@@ -91,7 +93,7 @@ instance HasOptionsOverrideSettings CliOptions where
 instance HasOptionsOverrideSettings AppBaseConfig where
   optionsOverrideSettingsL = appCliOptionsL . optionsOverrideSettingsL
 
-instance HasOptionsOverrideSettings App where
+instance HasOptionsOverrideSettings PlatformRunnerEnv where
   optionsOverrideSettingsL = appBaseConfigL . optionsOverrideSettingsL
 
 -- HasAppBaseConfig
@@ -101,7 +103,7 @@ class HasAppBaseConfig env where
 instance HasAppBaseConfig AppBaseConfig where
   appBaseConfigL = id
 
-instance HasAppBaseConfig App where
+instance HasAppBaseConfig PlatformRunnerEnv where
   appBaseConfigL = lens appBaseConfig (\x y -> x { appBaseConfig = y })
 
 -- HasAppSettings
@@ -111,8 +113,19 @@ class HasAppSettingsRef env where
 instance HasAppSettingsRef (SomeRef Settings) where
   appSettingsRefL = id
 
-instance HasAppSettingsRef App where
+instance HasAppSettingsRef PlatformRunnerEnv where
   appSettingsRefL = lens appSettingsRef (\x y -> x { appSettingsRef = y })
+
+-- HasGameConstants
+class HasGameConstantsRef env where
+  gameConstantsRefL :: Lens' env (SomeRef PlatformRunnerConstants)
+
+instance HasGameConstantsRef (SomeRef PlatformRunnerConstants) where
+  gameConstantsRefL = id
+
+instance HasGameConstantsRef PlatformRunnerEnv where
+  gameConstantsRefL =
+    lens gameConstantsRef (\x y -> x { gameConstantsRef = y })
 
 -- HasLogFunc
 instance HasLogFunc AppEnv where
@@ -121,7 +134,7 @@ instance HasLogFunc AppEnv where
 instance HasLogFunc AppBaseConfig where
   logFuncL = appEnvL . logFuncL
 
-instance HasLogFunc App where
+instance HasLogFunc PlatformRunnerEnv where
   logFuncL = appBaseConfigL . logFuncL
 
 -- HasProcessContext
@@ -133,5 +146,5 @@ instance HasProcessContext AppBaseConfig where
   processContextL =
     lens (appProcessContext . appEnv) (flip (set processContextL))
 
-instance HasProcessContext App where
+instance HasProcessContext PlatformRunnerEnv where
   processContextL = appBaseConfigL . processContextL

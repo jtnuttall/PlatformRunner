@@ -27,10 +27,10 @@ source-repository head
 
 library
   exposed-modules:
-      PlatformRunner.AppEnv
       PlatformRunner.Components.Entity
       PlatformRunner.Components.Global
       PlatformRunner.Components.Movement
+      PlatformRunner.Env
       PlatformRunner.Game.Constant
       PlatformRunner.Game.Input
       PlatformRunner.Game.Step

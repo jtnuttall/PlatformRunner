@@ -3,12 +3,12 @@ module PlatformRunner.RunApp
   ) where
 
 import           Apecs                          ( runSystem )
-import           PlatformRunner.AppEnv
+import           PlatformRunner.Env
 import           PlatformRunner.Game.Step       ( step )
 import           PlatformRunner.Game.World      ( initPlatformWorld )
 import           PlatformRunner.Import
 
-runApp :: RIO App ()
+runApp :: RIO PlatformRunnerEnv ()
 runApp = do
   cliOptions <- view appCliOptionsL
   configDir  <- view appConfigDirL

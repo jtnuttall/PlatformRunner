@@ -3,13 +3,15 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 module Main
   ( main
   ) where
 
 import           Options.Applicative.Simple
 import qualified Paths_PlatformRunner
-import           PlatformRunner.AppEnv
+import           PlatformRunner.Env
+import           PlatformRunner.Game.Constant   ( platformRunnerConstants )
 import           PlatformRunner.Import
 import           PlatformRunner.RunApp          ( runApp )
 import           PlatformRunner.Settings.Defaults
@@ -17,6 +19,7 @@ import           PlatformRunner.Settings.Defaults
                                                 , defaultSettingsFileName
                                                 )
 import           PlatformRunner.Settings.IO
+import           PlatformRunner.Settings.Types  ( Settings(difficulty) )
 import           RIO.FilePath                   ( (</>) )
 import           RIO.Process
 
@@ -63,9 +66,14 @@ main = do
 
     case appSettings of
       Left  except   -> fail $ show except -- TODO handle errors with retry?
-      Right settings -> newSomeRef settings >>= \appSettingsRef ->
-        let
-          app = App { appBaseConfig  = appBaseConfig
-                    , appSettingsRef = appSettingsRef
-                    }
-        in  runRIO app runApp
+      Right settings -> do
+        appSettingsRef <- newSomeRef settings
+        gameConstantsRef <- newSomeRef $ platformRunnerConstants (difficulty settings)
+
+        let platformRunnerEnv = PlatformRunnerEnv
+              { appBaseConfig
+              , appSettingsRef
+              , gameConstantsRef
+              }
+
+        runRIO platformRunnerEnv runApp
