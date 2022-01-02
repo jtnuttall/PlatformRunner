@@ -3,8 +3,9 @@ module PlatformRunner.Settings.Types
   ( DisplayMode(..)
   , toGlossDisplayMode
   , Difficulty(..)
-  , Settings(..)
   , WindowDims(..)
+  , Settings(..)
+  , windowDims
   ) where
 
 import qualified Apecs.Gloss                   as Apecs
@@ -14,6 +15,7 @@ import           Data.Aeson
 import           Data.Aeson.Types               ( prependFailure
                                                 , typeMismatch
                                                 )
+import           Data.Coerce                    ( coerce )
 import           Linear                         ( V2(V2) )
 import           PlatformRunner.Import
 
@@ -67,13 +69,28 @@ instance FromJSON WindowDims where
 data Settings = Settings
   { displayMode :: !DisplayMode
   , difficulty  :: !Difficulty
-  , windowDims  :: !WindowDims
+  , _windowDims :: !WindowDims
   }
   deriving (Generic, Show)
 
-makeLenses ''Settings
+windowDims :: (Num a) => Settings -> V2 a
+windowDims = fmap (fromIntegral :: Num a => Int -> a) . coerce . _windowDims
 
 instance ToJSON Settings where
-  toEncoding = genericToEncoding encodingOptions
+  toJSON Settings {..} = object
+    [ "displayMode" .= displayMode
+    , "difficulty" .= difficulty
+    , "windowDimensions" .= _windowDims
+    ]
 
-instance FromJSON Settings
+instance FromJSON Settings where
+  parseJSON (Object v) =
+    Settings
+      <$> v
+      .:  "displayMode"
+      <*> v
+      .:  "difficulty"
+      <*> v
+      .:  "windowDimensions"
+  parseJSON invalid =
+    prependFailure "parsing Settings failed, " (typeMismatch "Object" invalid)

@@ -15,5 +15,5 @@ defaultSettingsFileName = "settings.yaml"
 defaultSettings :: Settings
 defaultSettings = Settings { displayMode = Fullscreen
                            , difficulty  = Normal
-                           , windowDims  = WindowDims $ V2 640 360
+                           , _windowDims = WindowDims $ V2 640 360
                            }
