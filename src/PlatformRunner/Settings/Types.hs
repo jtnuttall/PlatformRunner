@@ -5,6 +5,7 @@ module PlatformRunner.Settings.Types
   , glossDisplayMode
   , Difficulty(..)
   , Settings(..)
+  , settingsSchema
   ) where
 
 import qualified Apecs.Gloss                   as Apecs
@@ -101,3 +102,9 @@ instance ToJSON Settings
 
 instance FromJSON Settings where
   parseJSON = viaYamlSchema
+
+
+settingsSchema :: Schema
+settingsSchema = explainParser (yamlSchema :: YamlParser Settings)
+-- defaultSettings :: Settings
+-- defaultSettings = yamlSchema

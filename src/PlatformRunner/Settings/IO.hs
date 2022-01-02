@@ -1,6 +1,7 @@
 module PlatformRunner.Settings.IO
   ( readSettings
   , writeSettings
+  , writeSettingsDoc
   , getOrCreateAppConfigDir
   , readOrCreateAppSettings
   ) where
@@ -15,7 +16,9 @@ import           GHC.IO.Exception               ( IOErrorType(..)
 import           PlatformRunner.Env
 import           PlatformRunner.Import
 import           PlatformRunner.Settings.Defaults
-import           PlatformRunner.Settings.Types  ( Settings )
+import           PlatformRunner.Settings.Types  ( Settings
+                                                , settingsSchema
+                                                )
 import           RIO.Directory                  ( XdgDirectory(XdgConfig)
                                                 , createDirectoryIfMissing
                                                 , doesFileExist
@@ -23,6 +26,7 @@ import           RIO.Directory                  ( XdgDirectory(XdgConfig)
                                                 , makeAbsolute
                                                 )
 import           RIO.FilePath                   ( (</>) )
+import           YamlParse.Applicative          ( prettySchema )
 
 data SettingsFileReadException
   = ParseException FilePath Yaml.ParseException
@@ -38,14 +42,20 @@ getAppSettingsPath
      , MonadIO m
      , MonadReader env m
      )
-  => m FilePath
-getAppSettingsPath = do
+  => Maybe String
+  -> m FilePath
+getAppSettingsPath extTag = do
   configDir        <- view appConfigDirL
   overrideFileName <- view optionsOverrideSettingsL
 
   case overrideFileName of
     Just fileName -> makeAbsolute fileName
-    Nothing       -> return $ configDir </> defaultSettingsFileName
+    Nothing ->
+      return
+        $   configDir
+        </> defaultSettingsBaseName
+        <>  fromMaybe "" extTag
+        <>  defaultSettingsExt
 
 -- | Gets or creates the App's config directory. Currently this will be the XDG 
 -- config directory.
@@ -68,7 +78,7 @@ writeSettings'
   => Settings
   -> m ()
 writeSettings' settings = do
-  filePath <- getAppSettingsPath
+  filePath <- getAppSettingsPath Nothing
   liftIO $ encodeFile filePath settings
 
 -- | Writes the settings currently in the environment to the file specified by 
@@ -82,9 +92,20 @@ writeSettings
      )
   => m ()
 writeSettings = do
-  filePath <- getAppSettingsPath
+  filePath <- getAppSettingsPath Nothing
   settings <- readSomeRef =<< view appSettingsRefL
   liftIO $ encodeFile filePath settings
+
+writeSettingsDoc
+  :: ( HasOptionsOverrideSettings env
+     , HasAppConfigDir env
+     , MonadIO m
+     , MonadReader env m
+     )
+  => m ()
+writeSettingsDoc = do
+  filePath <- getAppSettingsPath (Just defaultSettingsDocExt)
+  writeFileUtf8 filePath $ prettySchema settingsSchema
 
 -- | Reads settings from the file specified by the environment.
 readSettings
@@ -96,7 +117,7 @@ readSettings
      )
   => m (Either SettingsFileReadException Settings)
 readSettings = do
-  filePath       <- getAppSettingsPath
+  filePath       <- getAppSettingsPath Nothing
   fileReadResult <- try $ liftIO $ decodeFileWithWarnings filePath
 
   case fileReadResult of
@@ -127,9 +148,15 @@ readOrCreateAppSettings
      )
   => m (Either SettingsFileReadException Settings)
 readOrCreateAppSettings = do
-  filePath   <- getAppSettingsPath
-  fileExists <- doesFileExist filePath
-  unless fileExists $ writeSettings' defaultSettings
+  settingsFilePath   <- getAppSettingsPath Nothing
+  settingsFileExists <- doesFileExist settingsFilePath
+  unless settingsFileExists $ writeSettings' defaultSettings
+
+  -- TODO move into initialization function
+  settingsDocFilePath   <- getAppSettingsPath (Just defaultSettingsDocExt)
+  settingsDocFileExists <- doesFileExist settingsDocFilePath
+  unless settingsDocFileExists writeSettingsDoc
+
   readSettings
 
 -- | Read the settings file specified by the environment, or create it if no such

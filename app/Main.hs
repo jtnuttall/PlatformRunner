@@ -16,7 +16,8 @@ import           PlatformRunner.Import
 import           PlatformRunner.RunApp          ( runApp )
 import           PlatformRunner.Settings.Defaults
                                                 ( configFolderName
-                                                , defaultSettingsFileName
+                                                , defaultSettingsBaseName
+                                                , defaultSettingsExt
                                                 )
 import           PlatformRunner.Settings.IO
 import           PlatformRunner.Settings.Types  ( Settings(difficulty) )
@@ -31,7 +32,10 @@ cliOptionsParser =
            (strOption
              (long "settings" <> short 's' <> help
                (  "Overrides the settings file. Defaults to \""
-               <> (configFolderName </> defaultSettingsFileName)
+               <> (   configFolderName
+                  </> defaultSettingsBaseName
+                  <>  defaultSettingsExt
+                  )
                <> "\""
                )
              )
