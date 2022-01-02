@@ -87,8 +87,7 @@ library
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
-      aeson >=1.5 && <2
-    , apecs >=0.9 && <1.0
+      apecs >=0.9 && <1.0
     , apecs-gloss ==0.2.*
     , apecs-physics ==0.4.*
     , base >=4.11 && <10
@@ -98,6 +97,7 @@ library
     , rio >=0.1.12.0
     , template-haskell
     , yaml
+    , yamlparse-applicative
   default-language: Haskell2010
 
 executable PlatformRunner-exe

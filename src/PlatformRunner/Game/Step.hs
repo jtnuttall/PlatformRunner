@@ -5,7 +5,9 @@ import           Linear
 import           PlatformRunner.Env
 import           PlatformRunner.Game.Constant
 import           PlatformRunner.Import
-import           PlatformRunner.Settings.Types  ( windowDims )
+import           PlatformRunner.Settings.Types  ( Dimensions(unDimensions)
+                                                , Settings(resolution)
+                                                )
 
 initializeSystem
   :: (HasLogFunc env, HasGameConstantsRef env) => PlatformRunnerSystem env ()
@@ -21,7 +23,8 @@ initializeSystem = do
 clearPlatforms :: (HasAppSettingsRef env) => PlatformRunnerSystem env ()
 clearPlatforms = do
   settings <- lift $ readSomeRef =<< view appSettingsRefL
-  let (V2 windowWidth _) = windowDims settings
+  let (V2 windowWidth _) =
+        fmap fromIntegral . unDimensions $ resolution settings
 
   cmap $ \platforms@(Platform, Position (V2 x _), Velocity _) ->
     if x < 0 || x > windowWidth then Nothing else Just platforms

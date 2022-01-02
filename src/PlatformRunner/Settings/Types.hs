@@ -1,42 +1,59 @@
-{-# LANGUAGE TemplateHaskell #-}
 module PlatformRunner.Settings.Types
-  ( DisplayMode(..)
-  , toGlossDisplayMode
+  ( Dimensions(..)
+  , Coordinates(..)
+  , DisplayMode(..)
+  , glossDisplayMode
   , Difficulty(..)
-  , WindowDims(..)
   , Settings(..)
-  , windowDims
   ) where
 
 import qualified Apecs.Gloss                   as Apecs
                                                 ( Display(..) )
-import           Control.Lens                   ( makeLenses )
-import           Data.Aeson
-import           Data.Aeson.Types               ( prependFailure
-                                                , typeMismatch
-                                                )
-import           Data.Coerce                    ( coerce )
+import           Data.Yaml               hiding ( Parser )
 import           Linear                         ( V2(V2) )
 import           PlatformRunner.Import
+import           YamlParse.Applicative
 
-encodingOptions :: Data.Aeson.Options
-encodingOptions = defaultOptions { rejectUnknownFields = True }
+newtype Dimensions = Dimensions { unDimensions :: V2 Int }
+
+instance Show Dimensions where
+  show Dimensions { unDimensions = V2 width height } =
+    show width <> "x" <> show height
+
+instance YamlSchema Dimensions where
+  yamlSchema =
+    objectParser "dimensions"
+      $   Dimensions
+      <$> (V2 <$> requiredField' "width" <*> requiredField' "height")
+
+instance ToJSON Dimensions where
+  toJSON Dimensions { unDimensions = V2 width height } =
+    object ["width" .= width, "height" .= height]
+
+newtype Coordinates = Coordinates { unCoordinates :: V2 Int }
+
+instance Show Coordinates where
+  show Coordinates { unCoordinates = V2 x y } =
+    "(" <> show x <> ", " <> show y <> ")"
+
+instance ToJSON Coordinates where
+  toJSON Coordinates { unCoordinates = V2 x y } = object ["x" .= x, "y" .= y]
 
 data DisplayMode
   = Fullscreen
-  | Windowed String (Int, Int) (Int, Int)
+  | Windowed
   deriving (Generic, Show)
 
-instance ToJSON DisplayMode where
-  toEncoding = genericToEncoding encodingOptions
+instance YamlSchema DisplayMode where
+  yamlSchema = alternatives
+    [ Fullscreen <$ literalString "Fullscreen"
+    , Windowed <$ literalString "Windowed"
+    ]
 
-instance FromJSON DisplayMode
+instance ToJSON DisplayMode
 
-toGlossDisplayMode :: DisplayMode -> Apecs.Display
-toGlossDisplayMode = \case
-  Fullscreen -> Apecs.FullScreen
-  Windowed name (width, height) (x, y) ->
-    Apecs.InWindow name (width, height) (x, y)
+instance FromJSON DisplayMode where
+  parseJSON = viaYamlSchema
 
 data Difficulty = Easy | Normal | Hard deriving (Generic)
 
@@ -46,51 +63,41 @@ instance Show Difficulty where
     Normal -> "Normal"
     Hard   -> "Hard"
 
-instance ToJSON Difficulty where
-  toEncoding = genericToEncoding encodingOptions
+instance YamlSchema Difficulty where
+  yamlSchema = alternatives
+    [ Easy <$ literalString "Easy"
+    , Normal <$ literalString "Normal"
+    , Hard <$ literalString "Hard"
+    ]
 
-instance FromJSON Difficulty
+instance ToJSON Difficulty
 
-newtype WindowDims = WindowDims (V2 Int) deriving (Generic)
-
-instance Show WindowDims where
-  show (WindowDims (V2 width height)) = show width <> "x" <> show height
-
-instance ToJSON WindowDims where
-  toJSON (WindowDims (V2 width height)) =
-    object ["width" .= width, "height" .= height]
-
-instance FromJSON WindowDims where
-  parseJSON (Object v) =
-    WindowDims <$> (V2 <$> (v .: "width") <*> (v .: "height"))
-  parseJSON invalid =
-    prependFailure "parsing WindowDims failed, " (typeMismatch "Object" invalid)
+instance FromJSON Difficulty where
+  parseJSON = viaYamlSchema
 
 data Settings = Settings
   { displayMode :: !DisplayMode
   , difficulty  :: !Difficulty
-  , _windowDims :: !WindowDims
+  , resolution  :: !Dimensions
   }
   deriving (Generic, Show)
 
-windowDims :: (Num a) => Settings -> V2 a
-windowDims = fmap (fromIntegral :: Num a => Int -> a) . coerce . _windowDims
+glossDisplayMode :: String -> (Int, Int) -> Settings -> Apecs.Display
+glossDisplayMode windowTitle windowCenter Settings { displayMode, resolution }
+  = let V2 width height = unDimensions resolution
+    in  case displayMode of
+          Fullscreen -> Apecs.FullScreen
+          Windowed   -> Apecs.InWindow windowTitle (width, height) windowCenter
 
-instance ToJSON Settings where
-  toJSON Settings {..} = object
-    [ "displayMode" .= displayMode
-    , "difficulty" .= difficulty
-    , "windowDimensions" .= _windowDims
-    ]
+instance YamlSchema Settings where
+  yamlSchema =
+    unnamedObjectParser
+      $   Settings
+      <$> requiredField "displayMode" "The display mode to use."
+      <*> requiredField "difficulty"  "Difficulty"
+      <*> requiredField "resolution"  "Resolution"
+
+instance ToJSON Settings
 
 instance FromJSON Settings where
-  parseJSON (Object v) =
-    Settings
-      <$> v
-      .:  "displayMode"
-      <*> v
-      .:  "difficulty"
-      <*> v
-      .:  "windowDimensions"
-  parseJSON invalid =
-    prependFailure "parsing Settings failed, " (typeMismatch "Object" invalid)
+  parseJSON = viaYamlSchema

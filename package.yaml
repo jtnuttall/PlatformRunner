@@ -40,9 +40,9 @@ library:
     - apecs-physics >= 0.4 && < 0.5
     - apecs-gloss >= 0.2 && < 0.3
     - linear == 1.21.*
-    - aeson >= 1.5 && < 2
     - mwc-random >= 0.15 && < 0.16
     - yaml
+    - yamlparse-applicative
     - template-haskell
   default-extensions:
     - AutoDeriveTypeable
