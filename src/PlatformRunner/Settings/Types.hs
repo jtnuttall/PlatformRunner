@@ -6,6 +6,7 @@ module PlatformRunner.Settings.Types
   , Difficulty(..)
   , Settings(..)
   , settingsSchema
+  , defaultSettings
   ) where
 
 import qualified Apecs.Gloss                   as Apecs
@@ -80,8 +81,16 @@ data Settings = Settings
   { displayMode :: !DisplayMode
   , difficulty  :: !Difficulty
   , resolution  :: !Dimensions
+  , fps         :: !(Maybe Int)
   }
   deriving (Generic, Show)
+
+defaultSettings :: Settings
+defaultSettings = Settings { displayMode = Fullscreen
+                           , difficulty  = Normal
+                           , resolution  = Dimensions (V2 640 360)
+                           , fps         = Just 60
+                           }
 
 glossDisplayMode :: String -> (Int, Int) -> Settings -> Apecs.Display
 glossDisplayMode windowTitle windowCenter Settings { displayMode, resolution }
@@ -94,9 +103,11 @@ instance YamlSchema Settings where
   yamlSchema =
     objectParser "PlatformRunner Settings"
       $   Settings
-      <$> requiredField "displayMode" "The display mode to use."
-      <*> requiredField "difficulty"  "Difficulty"
-      <*> requiredField "resolution"  "Resolution"
+      <$> requiredField "displayMode" "The display mode to use"
+      <*> requiredField "difficulty"  "Game difficulty"
+      <*> requiredField "resolution"
+                        "Resolution (equivalent to window dims if Windowed)"
+      <*> optionalFieldWithDefault "fps" (fps defaultSettings) "FPS target"
 
 instance ToJSON Settings
 

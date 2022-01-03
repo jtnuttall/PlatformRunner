@@ -10,13 +10,11 @@ import           Data.Bitraversable             ( bimapM )
 import           Data.Yaml               hiding ( ParseException )
 import qualified Data.Yaml                     as Yaml
                                                 ( ParseException )
-import           GHC.IO.Exception               ( IOErrorType(..)
-                                                , IOException(IOError)
-                                                )
 import           PlatformRunner.Env
 import           PlatformRunner.Import
 import           PlatformRunner.Settings.Defaults
 import           PlatformRunner.Settings.Types  ( Settings
+                                                , defaultSettings
                                                 , settingsSchema
                                                 )
 import           RIO.Directory                  ( XdgDirectory(XdgConfig)
