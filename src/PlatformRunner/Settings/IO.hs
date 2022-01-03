@@ -6,6 +6,8 @@ module PlatformRunner.Settings.IO
   , readOrCreateAppSettings
   ) where
 
+-- This file should be split into better modules
+
 import           Data.Bitraversable             ( bimapM )
 import           Data.Yaml               hiding ( ParseException )
 import qualified Data.Yaml                     as Yaml

@@ -1,7 +1,9 @@
 module PlatformRunner.Env where
 
 import           PlatformRunner.Game.Constant   ( PlatformRunnerConstants )
-import           PlatformRunner.Settings.Types  ( Settings )
+import           PlatformRunner.Settings.Types  ( Dimensions
+                                                , Settings
+                                                )
 import           RIO
 import           RIO.Process
 
@@ -20,6 +22,7 @@ data AppEnv = AppEnv
   { appLogFunc        :: !LogFunc
   , appProcessContext :: !ProcessContext
   , appCliOptions     :: !CliOptions
+  , appScreenSize     :: !Dimensions
   }
 
 -- | Represents the basic configuration available to the app without reading
@@ -65,6 +68,21 @@ instance HasAppCliOptions AppBaseConfig where
 
 instance HasAppCliOptions PlatformRunnerEnv where
   appCliOptionsL = appEnvL . appCliOptionsL
+
+class HasAppScreenSize env where
+  appScreenSizeL :: Lens' env Dimensions
+
+instance HasAppScreenSize Dimensions where
+  appScreenSizeL = id
+
+instance HasAppScreenSize AppEnv where
+  appScreenSizeL = lens appScreenSize (\x y -> x { appScreenSize = y })
+
+instance HasAppScreenSize AppBaseConfig where
+  appScreenSizeL = appEnvL . appScreenSizeL
+
+instance HasAppScreenSize PlatformRunnerEnv where
+  appScreenSizeL = appEnvL . appScreenSizeL
 
 -- HasAppConfigDir
 class HasAppConfigDir env where

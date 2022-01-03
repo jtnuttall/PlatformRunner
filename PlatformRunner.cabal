@@ -93,6 +93,7 @@ library
     , apecs-gloss ==0.2.*
     , apecs-physics ==0.4.*
     , base >=4.11 && <10
+    , gloss
     , lens >=4.19 && <5
     , linear ==1.21.*
     , mwc-random ==0.15.*
@@ -112,7 +113,9 @@ executable PlatformRunner-exe
   build-depends:
       PlatformRunner
     , base >=4.11 && <10
+    , gloss
     , lens >=4.19 && <5
+    , linear ==1.21.*
     , optparse-simple
     , rio >=0.1.12.0
   default-language: Haskell2010
@@ -128,7 +131,9 @@ test-suite PlatformRunner-test
   build-depends:
       PlatformRunner
     , base >=4.11 && <10
+    , gloss
     , hspec
     , lens >=4.19 && <5
+    , linear ==1.21.*
     , rio >=0.1.12.0
   default-language: Haskell2010

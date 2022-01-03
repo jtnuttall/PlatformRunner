@@ -8,6 +8,9 @@ module Main
   ( main
   ) where
 
+import           Graphics.Gloss.Interface.Environment
+                                                ( getScreenSize )
+import           Linear                         ( V2(V2) )
 import           Options.Applicative.Simple
 import qualified Paths_PlatformRunner
 import           PlatformRunner.Env
@@ -20,7 +23,9 @@ import           PlatformRunner.Settings.Defaults
                                                 , defaultSettingsExt
                                                 )
 import           PlatformRunner.Settings.IO
-import           PlatformRunner.Settings.Types  ( Settings(difficulty) )
+import           PlatformRunner.Settings.Types  ( Dimensions(Dimensions)
+                                                , Settings(difficulty)
+                                                )
 import           RIO.FilePath                   ( (</>) )
 import           RIO.Process
 
@@ -56,9 +61,12 @@ main = do
 
 
   withLogFunc lo $ \lf -> do
+    screenSize <- getScreenSize
+
     let appEnv = AppEnv { appLogFunc        = lf
                         , appProcessContext = pc
                         , appCliOptions     = cliOptions
+                        , appScreenSize     = Dimensions $ uncurry V2 screenSize
                         }
 
     appConfigDir <- runRIO appEnv getOrCreateAppConfigDir
@@ -71,13 +79,13 @@ main = do
     case appSettings of
       Left  except   -> fail $ show except -- TODO handle errors with retry?
       Right settings -> do
-        appSettingsRef <- newSomeRef settings
-        gameConstantsRef <- newSomeRef $ platformRunnerConstants (difficulty settings)
+        appSettingsRef   <- newSomeRef settings
+        gameConstantsRef <- newSomeRef
+          $ platformRunnerConstants (difficulty settings)
 
-        let platformRunnerEnv = PlatformRunnerEnv
-              { appBaseConfig
-              , appSettingsRef
-              , gameConstantsRef
-              }
+        let platformRunnerEnv = PlatformRunnerEnv { appBaseConfig
+                                                  , appSettingsRef
+                                                  , gameConstantsRef
+                                                  }
 
         runRIO platformRunnerEnv runApp

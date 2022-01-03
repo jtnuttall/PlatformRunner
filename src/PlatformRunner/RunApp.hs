@@ -24,8 +24,11 @@ runApp = do
   cliOptions <- view appCliOptionsL
   configDir  <- view appConfigDirL
   settings   <- readSomeRef =<< view appSettingsRefL
+  screenSize <- view appScreenSizeL
 
   logInfo "Initializing Platform Runner..."
+  logInfo $ "Found native screen size => " <> displayShow screenSize
+
   logDebug $ "Config directory: " <> displayShow configDir
   logDebug $ "Received CLI options: " <> displayShow cliOptions
   logDebug $ "Initial settings: " <> displayShow settings
