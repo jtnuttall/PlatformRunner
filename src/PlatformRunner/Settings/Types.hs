@@ -92,7 +92,7 @@ glossDisplayMode windowTitle windowCenter Settings { displayMode, resolution }
 
 instance YamlSchema Settings where
   yamlSchema =
-    unnamedObjectParser
+    objectParser "PlatformRunner Settings"
       $   Settings
       <$> requiredField "displayMode" "The display mode to use."
       <*> requiredField "difficulty"  "Difficulty"
@@ -106,5 +106,3 @@ instance FromJSON Settings where
 
 settingsSchema :: Schema
 settingsSchema = explainParser (yamlSchema :: YamlParser Settings)
--- defaultSettings :: Settings
--- defaultSettings = yamlSchema

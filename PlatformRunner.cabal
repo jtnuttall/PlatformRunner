@@ -33,6 +33,7 @@ library
       PlatformRunner.Env
       PlatformRunner.Game.Constant
       PlatformRunner.Game.Input
+      PlatformRunner.Game.Picture
       PlatformRunner.Game.Step
       PlatformRunner.Game.World
       PlatformRunner.Import
@@ -40,6 +41,7 @@ library
       PlatformRunner.Settings.Defaults
       PlatformRunner.Settings.IO
       PlatformRunner.Settings.Types
+      PlatformRunner.Utility.Gloss
       PlatformRunner.Utility.Math
   other-modules:
       Paths_PlatformRunner

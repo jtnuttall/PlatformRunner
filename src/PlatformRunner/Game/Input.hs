@@ -18,4 +18,4 @@ handleEvent event = do
     EventKey (Char 'w') Down _ _ -> cmap
       $ \(Player, Velocity v0) -> Velocity (v0 + playerJumpVelocity constants)
 
-    _ -> error "unimpl"
+    _ -> return ()
