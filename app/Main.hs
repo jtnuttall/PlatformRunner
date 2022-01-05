@@ -66,7 +66,7 @@ main = do
     let appEnv = AppEnv { appLogFunc        = lf
                         , appProcessContext = pc
                         , appCliOptions     = cliOptions
-                        , appScreenSize     = Dimensions $ uncurry V2 screenSize
+                        , appScreenSize     = Dimensions $ uncurry V2 $!! screenSize
                         }
 
     appConfigDir <- runRIO appEnv getOrCreateAppConfigDir

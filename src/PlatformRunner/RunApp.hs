@@ -13,11 +13,9 @@ import           PlatformRunner.Game.Step       ( initializeSystem
 import           PlatformRunner.Game.World      ( initPlatformWorld )
 import           PlatformRunner.Import
 import           PlatformRunner.Settings.Types  ( Settings(..)
-                                                , defaultSettings
                                                 , glossDisplayMode
                                                 )
 import           PlatformRunner.Utility.Gloss   ( play )
-import           RIO.Partial                    ( fromJust )
 
 runApp :: RIO PlatformRunnerEnv ()
 runApp = do
@@ -34,9 +32,8 @@ runApp = do
   logDebug $ "Initial settings: " <> displayShow settings
 
   let displayMode = glossDisplayMode "Platform Runner" (10, 10) settings
-      fps'        = fromMaybe (fromJust $ fps defaultSettings) (fps settings)
 
   platformWorld <- liftIO initPlatformWorld
   runWith platformWorld $ do
     initializeSystem
-    play displayMode black fps' draw handleEvent step
+    play displayMode black (fps settings) draw handleEvent step

@@ -81,7 +81,7 @@ data Settings = Settings
   { displayMode :: !DisplayMode
   , difficulty  :: !Difficulty
   , resolution  :: !Dimensions
-  , fps         :: !(Maybe Int)
+  , fps         :: !Int
   }
   deriving (Generic, Show)
 
@@ -89,7 +89,7 @@ defaultSettings :: Settings
 defaultSettings = Settings { displayMode = Fullscreen
                            , difficulty  = Normal
                            , resolution  = Dimensions (V2 640 360)
-                           , fps         = Just 60
+                           , fps         = 60
                            }
 
 glossDisplayMode :: String -> (Int, Int) -> Settings -> Apecs.Display
@@ -103,17 +103,22 @@ instance YamlSchema Settings where
   yamlSchema =
     objectParser "PlatformRunner Settings"
       $   Settings
-      <$> requiredField "displayMode" "The display mode to use"
-      <*> requiredField "difficulty"  "Game difficulty"
-      <*> requiredField "resolution"
-                        "Resolution (equivalent to window dims if Windowed)"
+      <$> optionalFieldWithDefault "displayMode"
+                                   (displayMode defaultSettings)
+                                   "The display mode to use"
+      <*> optionalFieldWithDefault "difficulty"
+                                   (difficulty defaultSettings)
+                                   "Game difficulty"
+      <*> optionalFieldWithDefault
+            "resolution"
+            (resolution defaultSettings)
+            "Resolution (equivalent to window dims if Windowed)"
       <*> optionalFieldWithDefault "fps" (fps defaultSettings) "FPS target"
 
 instance ToJSON Settings
 
 instance FromJSON Settings where
   parseJSON = viaYamlSchema
-
 
 settingsSchema :: Schema
 settingsSchema = explainParser (yamlSchema :: YamlParser Settings)
