@@ -5,8 +5,8 @@ module PlatformRunner.RunApp
 import           Apecs                          ( runWith )
 import           Apecs.Physics.Gloss            ( black )
 import           PlatformRunner.Env
+import           PlatformRunner.Game.Draw       ( draw )
 import           PlatformRunner.Game.Input      ( handleEvent )
-import           PlatformRunner.Game.Picture    ( draw )
 import           PlatformRunner.Game.Step       ( initializeSystem
                                                 , step
                                                 )

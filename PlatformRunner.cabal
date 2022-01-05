@@ -32,8 +32,8 @@ library
       PlatformRunner.Components.Movement
       PlatformRunner.Env
       PlatformRunner.Game.Constant
+      PlatformRunner.Game.Draw
       PlatformRunner.Game.Input
-      PlatformRunner.Game.Picture
       PlatformRunner.Game.Step
       PlatformRunner.Game.World
       PlatformRunner.Import

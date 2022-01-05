@@ -1,4 +1,4 @@
-module PlatformRunner.Game.Picture where
+module PlatformRunner.Game.Draw where
 
 import           Apecs
 import           Apecs.Gloss             hiding ( foldDraw
