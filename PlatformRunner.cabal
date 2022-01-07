@@ -48,7 +48,6 @@ library
   hs-source-dirs:
       src
   default-extensions:
-      AutoDeriveTypeable
       BangPatterns
       BinaryLiterals
       ConstraintKinds
@@ -70,7 +69,6 @@ library
       InstanceSigs
       KindSignatures
       LambdaCase
-      MonadFailDesugaring
       MultiParamTypeClasses
       MultiWayIf
       NamedFieldPuns
@@ -89,14 +87,13 @@ library
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
-      apecs >=0.9 && <1.0
-    , apecs-gloss ==0.2.*
-    , apecs-physics ==0.4.*
+      apecs
+    , apecs-gloss
+    , apecs-physics
     , base >=4.11 && <10
     , gloss
-    , lens >=4.19 && <5
-    , linear ==1.21.*
-    , mwc-random ==0.15.*
+    , linear
+    , mwc-random
     , rio >=0.1.12.0
     , template-haskell
     , yaml
@@ -109,13 +106,50 @@ executable PlatformRunner-exe
       Paths_PlatformRunner
   hs-source-dirs:
       app
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DoAndIfThenElse
+      EmptyDataDecls
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NoImplicitPrelude
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternGuards
+      PolyKinds
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeFamilies
+      TypeSynonymInstances
+      ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       PlatformRunner
     , base >=4.11 && <10
     , gloss
-    , lens >=4.19 && <5
-    , linear ==1.21.*
+    , linear
     , optparse-simple
     , rio >=0.1.12.0
   default-language: Haskell2010
@@ -127,13 +161,50 @@ test-suite PlatformRunner-test
       Paths_PlatformRunner
   hs-source-dirs:
       test
+  default-extensions:
+      BangPatterns
+      BinaryLiterals
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveDataTypeable
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DoAndIfThenElse
+      EmptyDataDecls
+      ExistentialQuantification
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NoImplicitPrelude
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternGuards
+      PolyKinds
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      TupleSections
+      TypeFamilies
+      TypeSynonymInstances
+      ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       PlatformRunner
     , base >=4.11 && <10
     , gloss
     , hspec
-    , lens >=4.19 && <5
-    , linear ==1.21.*
+    , linear
     , rio >=0.1.12.0
   default-language: Haskell2010

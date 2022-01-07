@@ -22,8 +22,7 @@ description: Please see the README on Github at <https://github.com/jtnuttall/Pl
 dependencies:
   - base >= 4.11 && < 10
   - rio >= 0.1.12.0
-  - lens >= 4.19 && < 5
-  - linear == 1.21.*
+  - linear
   - gloss
 
 ghc-options:
@@ -35,56 +34,55 @@ ghc-options:
   - -Wpartial-fields
   - -Wredundant-constraints
 
+default-extensions:
+  - BangPatterns
+  - BinaryLiterals
+  - ConstraintKinds
+  - DataKinds
+  - DefaultSignatures
+  - DeriveDataTypeable
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveGeneric
+  - DeriveTraversable
+  - DoAndIfThenElse
+  - EmptyDataDecls
+  - ExistentialQuantification
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - InstanceSigs
+  - KindSignatures
+  - LambdaCase
+  - MultiParamTypeClasses
+  - MultiWayIf
+  - NamedFieldPuns
+  - NoImplicitPrelude
+  - OverloadedStrings
+  - PartialTypeSignatures
+  - PatternGuards
+  - PolyKinds
+  - RankNTypes
+  - RecordWildCards
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - TupleSections
+  - TypeFamilies
+  - TypeSynonymInstances
+  - ViewPatterns
+
 library:
   source-dirs: src
   dependencies:
-    - apecs >= 0.9 && < 1.0
-    - apecs-physics >= 0.4 && < 0.5
-    - apecs-gloss >= 0.2 && < 0.3
-    - mwc-random >= 0.15 && < 0.16
+    - apecs
+    - apecs-physics
+    - apecs-gloss
+    - mwc-random
     - yaml
     - yamlparse-applicative
     - template-haskell
-  default-extensions:
-    - AutoDeriveTypeable
-    - BangPatterns
-    - BinaryLiterals
-    - ConstraintKinds
-    - DataKinds
-    - DefaultSignatures
-    - DeriveDataTypeable
-    - DeriveFoldable
-    - DeriveFunctor
-    - DeriveGeneric
-    - DeriveTraversable
-    - DoAndIfThenElse
-    - EmptyDataDecls
-    - ExistentialQuantification
-    - FlexibleContexts
-    - FlexibleInstances
-    - FunctionalDependencies
-    - GADTs
-    - GeneralizedNewtypeDeriving
-    - InstanceSigs
-    - KindSignatures
-    - LambdaCase
-    - MonadFailDesugaring
-    - MultiParamTypeClasses
-    - MultiWayIf
-    - NamedFieldPuns
-    - NoImplicitPrelude
-    - OverloadedStrings
-    - PartialTypeSignatures
-    - PatternGuards
-    - PolyKinds
-    - RankNTypes
-    - RecordWildCards
-    - ScopedTypeVariables
-    - StandaloneDeriving
-    - TupleSections
-    - TypeFamilies
-    - TypeSynonymInstances
-    - ViewPatterns
 
 executables:
   PlatformRunner-exe:
