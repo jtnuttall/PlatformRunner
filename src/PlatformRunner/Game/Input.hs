@@ -2,20 +2,29 @@ module PlatformRunner.Game.Input where
 
 import           Apecs
 import           Apecs.Gloss
-import           PlatformRunner.Env             ( HasGameConstantsRef
-                                                  ( gameConstantsRefL
-                                                  )
-                                                )
+import           Apecs.Physics
+import           PlatformRunner.Components.Entity
+import           PlatformRunner.Env
 import           PlatformRunner.Game.Constant
-import           PlatformRunner.Import   hiding ( Down )
+import           PlatformRunner.Prelude
 
 handleEvent
-  :: (HasGameConstantsRef env) => Event -> PlatformRunnerSystem env ()
+  :: (HasLogFunc env, HasConfigElem env PlatformRunnerConstants)
+  => Event
+  -> PlatformRunnerSystem env ()
 handleEvent event = do
-  constants <- lift $ readSomeRef =<< view gameConstantsRefL
+  constants <- lift viewConfig
 
   case event of
-    EventKey (Char 'w') Down _ _ -> cmap
-      $ \(Player, Velocity v0) -> Velocity (v0 + playerJumpVelocity constants)
+    EventKey (Char 'w') Down _ _ -> do
+      cmap $ \(Player, Velocity v0, Not :: Not IsFlying) ->
+        Velocity (v0 + playerJumpVelocity constants)
+    EventKey (SpecialKey KeySpace) Down _ _ -> do
+      cmap $ \(Player, Velocity v0, Not :: Not IsFlying) ->
+        Velocity (v0 + playerJumpVelocity constants)
+
+    EventKey (Char 'q') Down _ _ -> do
+      lift $ logInfo "Got 'q' -- exiting gracefully."
+      exitSuccess
 
     _ -> return ()

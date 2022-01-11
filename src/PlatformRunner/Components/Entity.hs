@@ -3,6 +3,7 @@ module PlatformRunner.Components.Entity
   , Coin(..)
   , Platform(..)
   , Player(..)
+  , IsFlying(..)
   ) where
 
 import           Apecs                          ( Component
@@ -36,3 +37,9 @@ data Player = Player
 
 instance Component Player where
   type Storage Player = Unique Player
+
+data IsFlying = IsFlying
+  deriving Show
+
+instance Component IsFlying where
+  type Storage IsFlying = Map IsFlying

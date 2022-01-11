@@ -1,15 +1,22 @@
-module PlatformRunner.Utility.Gloss where
--- More generic versions of gloss functions from Apecs
+module Utility.Gloss where
 
 import           Apecs
 import           Apecs.Gloss                    ( Display
+                                                , Event(..)
                                                 , Picture
+                                                , blue
                                                 , cameraTransform
+                                                , color
+                                                , green
                                                 , playIO
+                                                , red
                                                 )
+import           Apecs.Physics
 import           Apecs.Physics.Gloss            ( Camera
                                                 , Color
-                                                , Event
+                                                , Transform
+                                                , convexToPicture
+                                                , worldTransform
                                                 )
 import           RIO                     hiding ( Display )
 
@@ -27,6 +34,22 @@ foldDrawM
   -> SystemT w m Picture
 foldDrawM fn = cfoldM (\pic -> fmap (mappend pic) . fn) mempty
 
+drawBody
+  :: (MonadIO m, Has w m Physics)
+  => (Body, Transform, ShapeList)
+  -> SystemT w m Picture
+drawBody (btype, transform, ShapeList shapes) =
+  color shColor . worldTransform transform <$> foldM foldfn mempty shapes
+ where
+  foldfn pic shapeEty = do
+    Shape _ convex <- get shapeEty
+    return . mappend pic $ convexToPicture convex
+  shColor = case btype of
+    DynamicBody   -> red
+    KinematicBody -> green
+    StaticBody    -> blue
+
+-- | Unlifted version of playIO
 play
   :: (MonadUnliftIO m, Has w m Camera)
   => Display                   -- ^ Display mode
@@ -34,7 +57,7 @@ play
   -> Int                       -- ^ Desired FPS
   -> SystemT w m Picture       -- ^ Drawing function
   -> (Event -> SystemT w m ()) -- ^ Event handling function
-  -> (Float -> SystemT w m ()) -- ^ Stepping function, with a time delta argument.
+  -> (Double -> SystemT w m ()) -- ^ Stepping function, with a time delta argument.
   -> SystemT w m ()
 play disp col fps draw handleEvent step = do
   world <- ask
@@ -52,4 +75,4 @@ play disp col fps draw handleEvent step = do
     world
     (unlift . draw')
     (\event' w' -> unlift (handleEvent' event' w'))
-    (\dT world' -> unlift (step' dT world'))
+    (\dT world' -> unlift (step' (realToFrac dT) world'))

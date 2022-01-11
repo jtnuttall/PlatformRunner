@@ -24,6 +24,7 @@ dependencies:
   - rio >= 0.1.12.0
   - linear
   - gloss
+  - microlens-platform
 
 ghc-options:
   - -Wall
@@ -71,6 +72,7 @@ default-extensions:
   - TupleSections
   - TypeFamilies
   - TypeSynonymInstances
+  - TypeApplications
   - ViewPatterns
 
 library:
@@ -79,10 +81,18 @@ library:
     - apecs
     - apecs-physics
     - apecs-gloss
-    - mwc-random
+    - splitmix
+    - template-haskell
+    - conduit
+    - async
+    - stm
+    - stm-chans
+    - aeson
     - yaml
     - yamlparse-applicative
-    - template-haskell
+    - lens
+  # ghc-options:
+  # - -O2
 
 executables:
   PlatformRunner-exe:
@@ -93,6 +103,7 @@ executables:
       - optparse-simple
 
     ghc-options:
+      # - -O2
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N

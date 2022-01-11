@@ -27,22 +27,29 @@ source-repository head
 
 library
   exposed-modules:
+      PlatformRunner
       PlatformRunner.Components.Entity
       PlatformRunner.Components.Global
-      PlatformRunner.Components.Movement
       PlatformRunner.Env
+      PlatformRunner.Game.Collision
       PlatformRunner.Game.Constant
       PlatformRunner.Game.Draw
       PlatformRunner.Game.Input
       PlatformRunner.Game.Step
       PlatformRunner.Game.World
-      PlatformRunner.Import
-      PlatformRunner.RunApp
-      PlatformRunner.Settings.Defaults
-      PlatformRunner.Settings.IO
-      PlatformRunner.Settings.Types
-      PlatformRunner.Utility.Gloss
-      PlatformRunner.Utility.Math
+      PlatformRunner.Level
+      PlatformRunner.Level.Conduit
+      PlatformRunner.Level.Generated
+      PlatformRunner.Level.Generated.FlatWorld
+      PlatformRunner.Level.Internal.Parser
+      PlatformRunner.Level.Internal.STM
+      PlatformRunner.Level.Internal.Types
+      PlatformRunner.Prelude
+      PlatformRunner.Settings
+      PlatformRunner.Settings.Internal
+      PlatformRunner.Types
+      Utility.Gloss
+      Utility.Math
   other-modules:
       Paths_PlatformRunner
   hs-source-dirs:
@@ -84,17 +91,25 @@ library
       TupleSections
       TypeFamilies
       TypeSynonymInstances
+      TypeApplications
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
-      apecs
+      aeson
+    , apecs
     , apecs-gloss
     , apecs-physics
+    , async
     , base >=4.11 && <10
+    , conduit
     , gloss
+    , lens
     , linear
-    , mwc-random
+    , microlens-platform
     , rio >=0.1.12.0
+    , splitmix
+    , stm
+    , stm-chans
     , template-haskell
     , yaml
     , yamlparse-applicative
@@ -143,6 +158,7 @@ executable PlatformRunner-exe
       TupleSections
       TypeFamilies
       TypeSynonymInstances
+      TypeApplications
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
@@ -150,6 +166,7 @@ executable PlatformRunner-exe
     , base >=4.11 && <10
     , gloss
     , linear
+    , microlens-platform
     , optparse-simple
     , rio >=0.1.12.0
   default-language: Haskell2010
@@ -198,6 +215,7 @@ test-suite PlatformRunner-test
       TupleSections
       TypeFamilies
       TypeSynonymInstances
+      TypeApplications
       ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
@@ -206,5 +224,6 @@ test-suite PlatformRunner-test
     , gloss
     , hspec
     , linear
+    , microlens-platform
     , rio >=0.1.12.0
   default-language: Haskell2010

@@ -8,39 +8,27 @@ import           Graphics.Gloss.Interface.Environment
 import           Linear                         ( V2(V2) )
 import           Options.Applicative.Simple
 import qualified Paths_PlatformRunner
+import qualified PlatformRunner                 ( run )
 import           PlatformRunner.Env
 import           PlatformRunner.Game.Constant   ( platformRunnerConstants )
-import           PlatformRunner.Import
-import           PlatformRunner.RunApp          ( runApp )
-import           PlatformRunner.Settings.Defaults
-                                                ( configFolderName
-                                                , defaultSettingsBaseName
-                                                , defaultSettingsExt
-                                                )
-import           PlatformRunner.Settings.IO
-import           PlatformRunner.Settings.Types  ( Dimensions(Dimensions)
-                                                , Settings(difficulty)
-                                                )
-import           RIO.FilePath                   ( (</>) )
+import           PlatformRunner.Prelude
+import           PlatformRunner.Settings
+import           PlatformRunner.Types
 import           RIO.Process
+
+verboseParser :: Parser OptionVerboseFlag
+verboseParser = OptionVerboseFlag <$> optional
+  (switch (long "verbose" <> short 'v' <> help "Verbose output?"))
+
+overrideSettingsFile :: Parser OptionOverrideSettingsPath
+overrideSettingsFile = OptionOverrideSettingsPath <$> optional
+  (strOption
+    (long "settings" <> short 's' <> help "Overrides the settings file.")
+  )
 
 cliOptionsParser :: Parser CliOptions
 cliOptionsParser =
-  CliOptions
-    <$>  switch (long "verbose" <> short 'v' <> help "Verbose output?")
-    <*>  optional
-           (strOption
-             (long "settings" <> short 's' <> help
-               (  "Overrides the settings file. Defaults to \""
-               <> (   configFolderName
-                  </> defaultSettingsBaseName
-                  <>  defaultSettingsExt
-                  )
-               <> "\""
-               )
-             )
-           )
-    <**> helper
+  CliOptions <$> verboseParser <*> overrideSettingsFile <**> helper
 
 main :: IO ()
 main = do
@@ -51,36 +39,36 @@ main = do
     cliOptionsParser
     empty
 
-  lo <- logOptionsHandle stderr (optionsVerbose cliOptions)
-  pc <- mkDefaultProcessContext
+  let verboseFlag =
+        fromMaybe False (unOptionVerboseFlag $ optionVerboseFlag cliOptions)
 
+  logOptions     <- logOptionsHandle stderr verboseFlag
+  processContext <- mkDefaultProcessContext
 
-  withLogFunc lo $ \lf -> do
-    screenSize <- getScreenSize
+  withLogFunc logOptions $ \logFunc -> do
+    screenSize   <- getScreenSize
+    appConfigDir <- getOrCreateAppConfigDir
 
-    let appEnv = AppEnv { appLogFunc        = lf
-                        , appProcessContext = pc
-                        , appCliOptions     = cliOptions
-                        , appScreenSize     = Dimensions $ uncurry V2 $!! screenSize
-                        }
+    let appEnv = AppEnv
+          { appLogFunc        = logFunc
+          , appProcessContext = processContext
+          , appCliOptions     = cliOptions
+          , appScreenSize = ScreenSize . Dimensions $ uncurry V2 $!! screenSize
+          , appConfigDir      = ConfigDir appConfigDir
+          }
 
-    appConfigDir <- runRIO appEnv getOrCreateAppConfigDir
-
-    let appBaseConfig =
-          AppBaseConfig { appEnv = appEnv, appConfigDir = appConfigDir }
-
-    appSettings <- runRIO appBaseConfig readOrCreateAppSettings
+    appSettings <- runRIO appEnv readOrCreateAppSettings
 
     case appSettings of
-      Left  except   -> fail $ show except -- TODO handle errors with retry?
+      Left  except   -> throwIO except
       Right settings -> do
-        appSettingsRef   <- newSomeRef settings
-        gameConstantsRef <- newSomeRef
-          $ platformRunnerConstants (difficulty settings)
+        appSettingsRef <- newSomeRef settings
 
-        let platformRunnerEnv = PlatformRunnerEnv { appBaseConfig
-                                                  , appSettingsRef
-                                                  , gameConstantsRef
-                                                  }
+        let appBaseSettingsEnv = AppBaseSettingsEnv { appEnv, appSettingsRef }
 
-        runRIO platformRunnerEnv runApp
+        gameConstants <- runRIO appBaseSettingsEnv getPlatformRunnerParameters
+
+        let platformRunnerEnv =
+              PlatformRunnerEnv { appBaseSettingsEnv, gameConstants }
+
+        runRIO platformRunnerEnv PlatformRunner.run

@@ -5,14 +5,7 @@ import           Apecs                          ( Component
                                                 , Global
                                                 , Storage
                                                 )
-import           RIO                            ( (+)
-                                                , Float
-                                                , Int
-                                                , Monoid(..)
-                                                , Num
-                                                , Semigroup(..)
-                                                , Show
-                                                )
+import           RIO
 
 newtype Score = Score Int deriving (Show, Num)
 
@@ -25,7 +18,7 @@ instance Monoid Score where
 instance Component Score where
   type Storage Score = Global Score
 
-newtype Time = Time Float deriving (Show, Num)
+newtype Time = Time Double deriving (Show, Num)
 
 instance Semigroup Time where
   (<>) = (+)
