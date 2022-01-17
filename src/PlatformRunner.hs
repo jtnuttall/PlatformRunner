@@ -1,9 +1,10 @@
 module PlatformRunner
-  ( run
+  ( runWith
   ) where
 
-import           Apecs                          ( runWith )
-import           Apecs.Physics.Gloss            ( white )
+import qualified Apecs                          ( runWith )
+import qualified Apecs.Gloss                   as Apecs
+                                                ( white )
 import           PlatformRunner.Env
 import           PlatformRunner.Game.Draw       ( draw )
 import           PlatformRunner.Game.Input      ( handleEvent )
@@ -11,15 +12,28 @@ import           PlatformRunner.Game.Step       ( initializeSystem
                                                 , step
                                                 )
 import           PlatformRunner.Game.World      ( initPlatformWorld )
-import           PlatformRunner.Settings        ( Settings(..)
+import           PlatformRunner.Level           ( flatWorld
+                                                , withLevel
+                                                )
+import           PlatformRunner.Settings        ( Settings(fps)
                                                 , getGlossDisplayMode
                                                 , getSettings
                                                 )
 import           RIO
+import           System.Random.MWC              ( createSystemRandom )
 import           Utility.Gloss                  ( play )
 
-run :: RIO PlatformRunnerEnv ()
-run = do
+runWith :: PlatformRunnerEnv -> IO ()
+runWith platformRunnerEnv = do
+  g <- createSystemRandom
+  withLevel (flatWorld g) $ \levelMetadata pullUpdate -> do
+    let envWithLevel =
+          EnvWithLevel { platformRunnerEnv, levelMetadata, pullUpdate }
+
+    runRIO envWithLevel runLevel
+
+runLevel :: RIO EnvWithLevel ()
+runLevel = do
   cliOptions            <- viewConfig @CliOptions
   ConfigDir  configDir  <- viewConfig
   ScreenSize screenSize <- viewConfig
@@ -36,6 +50,9 @@ run = do
   logDebug $ "Initial settings: " <> displayShow settings
 
   platformWorld <- liftIO initPlatformWorld
-  runWith platformWorld $ do
+
+  Apecs.runWith platformWorld $ do
     initializeSystem
-    play displayMode white (fps settings) draw handleEvent step
+    play displayMode Apecs.white (fps settings) draw handleEvent step
+
+

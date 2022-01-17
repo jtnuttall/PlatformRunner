@@ -1,12 +1,13 @@
 module PlatformRunner.Game.Collision where
 
 import           Apecs.Physics
+import           Common.Import
 import           PlatformRunner.Components.Entity
 import           PlatformRunner.Env
 import           PlatformRunner.Game.Constant   ( PlatformRunnerConstants(..)
                                                 , PlatformRunnerSystem
                                                 )
-import           PlatformRunner.Prelude
+import           PlatformRunner.Game.World      ( PlatformWorld(PlatformWorld) )
 
 playerCategory :: Int
 playerCategory = 1
@@ -50,8 +51,8 @@ obstacleFilter = CollisionFilter
   }
 
 createCollisionHandler
-  :: (HasConfigElem env PlatformRunnerConstants)
-  => PlatformRunnerSystem env CollisionHandler
+  :: (HasConfigElem env PlatformRunnerConstants, MonadIO m, MonadReader env m)
+  => SystemT PlatformWorld m CollisionHandler
 createCollisionHandler = do
   constants <- lift viewConfig
 

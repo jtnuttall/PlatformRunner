@@ -1,6 +1,5 @@
 module PlatformRunner.Level
-  ( Types.Level(lastPlatformPos, levelData, metadata)
-  , Types.LevelMetadata
+  ( Types.LevelMetadata
     ( levelDataPath
     , levelDescription
     , levelName
@@ -8,13 +7,17 @@ module PlatformRunner.Level
     , levelProcedural
     , winCondition
     )
-  , Types.RelativeObjectDesc(..)
+  , Types.RelativeItemDescriptor(..)
   , module PlatformRunner.Level.Generated
+  , withLevel
+  , PullUpdate
+  , ItemDescriptorResult(..)
   ) where
 
 import           PlatformRunner.Level.Conduit
 import           PlatformRunner.Level.Generated
 import qualified PlatformRunner.Level.Internal.Parser
                                                as Parser
+import           PlatformRunner.Level.Internal.STM
 import qualified PlatformRunner.Level.Internal.Types
                                                as Types

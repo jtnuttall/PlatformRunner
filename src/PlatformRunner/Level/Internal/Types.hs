@@ -1,14 +1,10 @@
 module PlatformRunner.Level.Internal.Types where
 
-import           Conduit
-import           Data.Kind                      ( Type )
-import           Data.Yaml
+import           Common.Import
 import           Linear
-import           PlatformRunner.Prelude
 import           PlatformRunner.Types
-import           YamlParse.Applicative
 
-data RelativeObjectDesc = PlatformDesc
+data RelativeItemDescriptor = PlatformDescriptor
   { offset  :: !(V2 Double)
   , extents :: !Dimensions
   }
@@ -36,37 +32,3 @@ data LevelMetadata = LevelMetadata
   , winCondition        :: !WinCondition
   }
   deriving Show
-
-newtype LevelSource m = LevelSource
-  { unLevelSource :: SealedConduitT () RelativeObjectDesc m () }
-
--- instance Monad LevelSource
-
--- data LevelState = LevelState
---   { conduit :: !(LevelSource IO)
---   , lastPlatformPos :: !(V2 Double)
---   , levelData :: !(Vector RelativeObjectDesc)}
-
-data Level = Level
-  { metadata        :: !LevelMetadata
-  , conduit         :: !(LevelSource IO)
-  , lastPlatformPos :: !(V2 Double)
-  , levelData       :: !(Vector RelativeObjectDesc)
-  }
-
--- instance HasStateRef  
-
-
-instance Show Level where
-  show Level {..} =
-    "Level { metadata = "
-      <> show metadata
-      <> ", "
-      <> "conduit = [someConduit]"
-      <> ", "
-      <> "lastPlatformPos = "
-      <> show lastPlatformPos
-      <> ", "
-      <> "levelData = "
-      <> show levelData
-      <> " }"

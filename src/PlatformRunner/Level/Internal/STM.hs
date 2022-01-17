@@ -1,5 +1,13 @@
-module PlatformRunner.Level.Internal.STM where
+module PlatformRunner.Level.Internal.STM
+  ( LevelProducer
+  , InitialLevelParameters(..)
+  , PullUpdate
+  , ItemDescriptorResult(..)
+  , toLevelProducer
+  , withLevel
+  ) where
 
+import           Common.Import
 import           Conduit
 import           Control.Concurrent.STM.TBMQueue
                                                 ( TBMQueue
@@ -7,40 +15,39 @@ import           Control.Concurrent.STM.TBMQueue
                                                 , tryReadTBMQueue
                                                 , writeTBMQueue
                                                 )
+import           Control.Lens
+import           Control.Monad.Cont
+import           Control.Monad.RWS
+import           Control.Monad.Zip
+import           GHC.Generics                   ( Generic1 )
 import           Linear
-import           PlatformRunner.Types
-import           RIO
+import           PlatformRunner.Level.Internal.Types
 
+inQueueSize :: Int
 inQueueSize = 50
 
-data RelativeItemDescriptor = PlatformDescriptor
-  { offset  :: !(V2 Double)
-  , extents :: !Dimensions
+data InitialLevelParameters m = InitialLevelParameters
+  { initialRequest :: Double
+  , metadata       :: LevelMetadata
+  , producer       :: LevelProducer m
   }
+
+data ItemDescriptorResult
+  = Closed
+  | Waiting
+  | Result !(Vector RelativeItemDescriptor)
   deriving Show
 
-data ProceduralData = ProceduralData
-  { proceduralSeed :: Vector Word8
-  , proceduralAlgo :: Maybe Text
+data LevelMail = LevelMail
+  { levelDataQueue   :: !LevelDataQueue
+  , levelDataRequest :: !LevelDataRequest
   }
-  deriving Show
 
-data WinCondition
-  = Distance Double
-  | DistanceInTime Double Double
-  | Platform Int
-  | None
-  deriving Show
+newtype LevelProducer m = LevelProducer
+  { unLevelProducer :: SealedConduitT () RelativeItemDescriptor m ()}
 
-data LevelMetadata = LevelMetadata
-  { levelDataPath       :: !(Maybe FilePath)
-  , levelName           :: !Text
-  , levelDescription    :: Maybe Text
-  , levelProcedural     :: !(Maybe ProceduralData)
-  , levelPlayerStartPos :: !(V2 Double)
-  , winCondition        :: !WinCondition
-  }
-  deriving Show
+newtype LevelDataRequest = LevelDataRequest
+  { unLevelDataRequest :: TMVar Double }
 
 newtype LevelDataQueue = LevelDataQueue
   { unLevelDataQueue :: TBMQueue (Vector RelativeItemDescriptor) }
@@ -49,14 +56,17 @@ newLevelDataQueue :: STM LevelDataQueue
 newLevelDataQueue = LevelDataQueue <$> newTBMQueue inQueueSize
 
 pullLevelData
-  :: LevelDataQueue -> STM (Maybe (Maybe (Vector RelativeItemDescriptor)))
-pullLevelData (LevelDataQueue queue) = tryReadTBMQueue queue
+  :: LevelDataRequest -> LevelDataQueue -> Double -> STM ItemDescriptorResult
+pullLevelData req (LevelDataQueue queue) requestSize = do
+  res <- tryReadTBMQueue queue
+
+  case res of
+    Nothing               -> return Closed
+    Just Nothing          -> requestLevelData req requestSize >> return Waiting
+    Just (Just levelData) -> return (Result levelData)
 
 pushLevelData :: LevelDataQueue -> Vector RelativeItemDescriptor -> STM ()
 pushLevelData (LevelDataQueue queue) = writeTBMQueue queue
-
-newtype LevelDataRequest = LevelDataRequest
-  { unLevelDataRequest :: TMVar Double }
 
 newLevelDataRequest :: Double -> STM LevelDataRequest
 newLevelDataRequest initialPullDistance =
@@ -68,38 +78,13 @@ requestLevelData (LevelDataRequest ref) = tryPutTMVar ref
 waitForLevelDataRequest :: LevelDataRequest -> STM Double
 waitForLevelDataRequest (LevelDataRequest ref) = takeTMVar ref
 
--- waitForRequest :: 
+toLevelProducer :: ConduitT () RelativeItemDescriptor m () -> LevelProducer m
+toLevelProducer = LevelProducer . sealConduitT
 
-data LevelMail = LevelMail
-  { levelDataQueue   :: !LevelDataQueue
-  , levelDataRequest :: !LevelDataRequest
-  }
-
-newtype LevelProducer m = LevelProducer
-  { unLevelProducer :: SealedConduitT () RelativeItemDescriptor m ()}
-
--- createLevelSTM :: MonadIO m => LevelMetadata -> LevelProducer m r -> STM Level
--- createLevelSTM metadata producer = undefined
-
-data InitialLevelParameters = InitialLevelParameters
-  { initialRequest :: Double
-  , metadata       :: LevelMetadata
-  , producer       :: forall m . Monad m => LevelProducer m
-  }
-
-sinkItemChunks
-  :: (PrimMonad m)
-  => ConduitT RelativeItemDescriptor Void m (Vector RelativeItemDescriptor)
-sinkItemChunks =
-  let accumUntilTerminus = undefined
-      lastPlatformPos    = V2 0 0
-  in  void (mapAccumWhileC accumUntilTerminus lastPlatformPos) .| sinkVector
-
-subscribe :: (MonadIO m, PrimMonad m) => LevelMail -> LevelProducer m -> m ()
-subscribe LevelMail {..} (LevelProducer initialProducer) =
+produce :: (MonadIO m, PrimMonad m) => LevelProducer m -> LevelMail -> m ()
+produce (LevelProducer initialProducer) LevelMail {..} =
   let loop producer = do
         newRequest <- atomically $ waitForLevelDataRequest levelDataRequest
-
         let checkRange desc newDist | newDist > newRequest = Left newDist
                                     | otherwise = Right (newDist, desc)
 
@@ -116,24 +101,20 @@ subscribe LevelMail {..} (LevelProducer initialProducer) =
         loop producer'
   in  loop initialProducer
 
-type RequestMore m = MonadIO m => Double -> m Bool
-
-type PullUpdate m
-  = MonadIO m => m (Maybe (Maybe (Vector RelativeItemDescriptor)))
+type PullUpdate m = Double -> m ItemDescriptorResult
 
 withLevel
   :: (MonadUnliftIO m, PrimMonad m)
-  => InitialLevelParameters
-  -> (LevelMetadata -> RequestMore m -> PullUpdate m -> m ())
+  => InitialLevelParameters m
+  -> (LevelMetadata -> PullUpdate m -> m ())
   -> m ()
-withLevel (InitialLevelParameters initialRequest levelMetadata levelProducer) go
+withLevel (InitialLevelParameters initialRequest levelMetadata levelProducer) subscribe
   = do
     levelDataRequest <- atomically $ newLevelDataRequest initialRequest
     levelDataQueue   <- atomically newLevelDataQueue
 
-    let requestMore = atomically . requestLevelData levelDataRequest
-        pullUpdate  = atomically $ pullLevelData levelDataQueue
+    let pullUpdate d =
+          atomically $ pullLevelData levelDataRequest levelDataQueue d
+        levelMail = LevelMail { levelDataQueue, levelDataRequest }
 
-    concurrently_
-      (subscribe LevelMail { levelDataQueue, levelDataRequest } levelProducer)
-      (go levelMetadata requestMore pullUpdate)
+    race_ (produce levelProducer levelMail) (subscribe levelMetadata pullUpdate)

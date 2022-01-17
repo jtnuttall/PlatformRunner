@@ -3,15 +3,15 @@ module Main
   ( main
   ) where
 
+import           Common.Import
 import           Graphics.Gloss.Interface.Environment
                                                 ( getScreenSize )
 import           Linear                         ( V2(V2) )
 import           Options.Applicative.Simple
 import qualified Paths_PlatformRunner
-import qualified PlatformRunner                 ( run )
+import qualified PlatformRunner                 ( runWith )
 import           PlatformRunner.Env
 import           PlatformRunner.Game.Constant   ( platformRunnerConstants )
-import           PlatformRunner.Prelude
 import           PlatformRunner.Settings
 import           PlatformRunner.Types
 import           RIO.Process
@@ -71,4 +71,4 @@ main = do
         let platformRunnerEnv =
               PlatformRunnerEnv { appBaseSettingsEnv, gameConstants }
 
-        runRIO platformRunnerEnv PlatformRunner.run
+        PlatformRunner.runWith platformRunnerEnv

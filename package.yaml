@@ -81,7 +81,8 @@ library:
     - apecs
     - apecs-physics
     - apecs-gloss
-    - splitmix
+    - random
+    - mwc-random
     - template-haskell
     - conduit
     - async
@@ -91,8 +92,11 @@ library:
     - yaml
     - yamlparse-applicative
     - lens
-  # ghc-options:
-  # - -O2
+    - logict
+    - mtl
+  ghc-options:
+    - -O2
+    - -fllvm
 
 executables:
   PlatformRunner-exe:
@@ -103,7 +107,8 @@ executables:
       - optparse-simple
 
     ghc-options:
-      # - -O2
+      - -O2
+      - -fllvm
       - -threaded
       - -rtsopts
       - -with-rtsopts=-N

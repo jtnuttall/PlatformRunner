@@ -1,15 +1,18 @@
 {-# LANGUAGE OverloadedLists #-}
 module PlatformRunner.Level.Generated
-  ( --allBuiltinLevels
-  -- , flatWorld
+  ( allBuiltinLevels
+  , flatWorld
+  , Level
   ) where
 
 import           PlatformRunner.Level.Generated.FlatWorld
-import           PlatformRunner.Level.Internal.Types
-                                                ( Level )
+import           PlatformRunner.Level.Internal.STM
+                                                ( InitialLevelParameters )
 import           RIO
-import           System.Random.SplitMix         ( SMGen )
+import           System.Random.Stateful         ( StatefulGen )
 
--- allBuiltinLevels :: Monad m => SMGen -> Vector Level
--- allBuiltinLevels g = [flatWorld g]
+type Level m = InitialLevelParameters m
+
+allBuiltinLevels :: (StatefulGen g m) => g -> Vector (Level m)
+allBuiltinLevels g = [flatWorld g]
 

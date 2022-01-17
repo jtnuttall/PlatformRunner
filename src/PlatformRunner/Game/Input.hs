@@ -3,10 +3,10 @@ module PlatformRunner.Game.Input where
 import           Apecs
 import           Apecs.Gloss
 import           Apecs.Physics
+import           Common.Import
 import           PlatformRunner.Components.Entity
 import           PlatformRunner.Env
 import           PlatformRunner.Game.Constant
-import           PlatformRunner.Prelude
 
 handleEvent
   :: (HasLogFunc env, HasConfigElem env PlatformRunnerConstants)

@@ -5,10 +5,10 @@ import           Apecs.Gloss             hiding ( foldDraw
                                                 , foldDrawM
                                                 )
 import           Apecs.Physics
+import           Common.Import
 import           PlatformRunner.Components.Entity
 import           PlatformRunner.Components.Global
 import           PlatformRunner.Game.Constant   ( PlatformRunnerSystem )
-import           PlatformRunner.Prelude
 import           Utility.Gloss
 
 translate' :: Position -> Picture -> Picture

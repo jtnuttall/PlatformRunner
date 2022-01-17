@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      Common.Import
       PlatformRunner
       PlatformRunner.Components.Entity
       PlatformRunner.Components.Global
@@ -44,7 +45,6 @@ library
       PlatformRunner.Level.Internal.Parser
       PlatformRunner.Level.Internal.STM
       PlatformRunner.Level.Internal.Types
-      PlatformRunner.Prelude
       PlatformRunner.Settings
       PlatformRunner.Settings.Internal
       PlatformRunner.Types
@@ -93,7 +93,7 @@ library
       TypeSynonymInstances
       TypeApplications
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -O2 -fllvm
   build-depends:
       aeson
     , apecs
@@ -105,9 +105,12 @@ library
     , gloss
     , lens
     , linear
+    , logict
     , microlens-platform
+    , mtl
+    , mwc-random
+    , random
     , rio >=0.1.12.0
-    , splitmix
     , stm
     , stm-chans
     , template-haskell
@@ -160,7 +163,7 @@ executable PlatformRunner-exe
       TypeSynonymInstances
       TypeApplications
       ViewPatterns
-  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -O2 -fllvm -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       PlatformRunner
     , base >=4.11 && <10

@@ -1,7 +1,8 @@
-module PlatformRunner.Prelude
+module Common.Import
   ( module Utility.Math
   , module RIO
   , module Control.Lens
+  , module Control.Lens.Tuple
   ) where
 
 import           Control.Lens                   ( (%~)
@@ -22,6 +23,7 @@ import           Control.Lens                   ( (%~)
                                                 , to
                                                 , view
                                                 )
+import           Control.Lens.Tuple
 import           RIO                     hiding ( (%~)
                                                 , (.~)
                                                 , ASetter

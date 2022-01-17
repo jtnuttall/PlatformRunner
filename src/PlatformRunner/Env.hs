@@ -1,8 +1,18 @@
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 module PlatformRunner.Env where
 
+import           Common.Import
 import           Control.Lens            hiding ( view )
 import           PlatformRunner.Game.Constant   ( PlatformRunnerConstants )
-import           PlatformRunner.Prelude
+import           PlatformRunner.Level           ( LevelMetadata
+                                                , PullUpdate
+                                                , RelativeItemDescriptor
+                                                )
+import           PlatformRunner.Level.Internal.STM
+                                                ( ItemDescriptorResult
+                                                , PullUpdate
+                                                )
 import           PlatformRunner.Settings.Internal
                                                 ( Settings(..) )
 import           PlatformRunner.Types           ( Dimensions )
@@ -195,9 +205,94 @@ instance HasConfigElem PlatformRunnerEnv SettingsRef where
 instance HasConfigElem PlatformRunnerEnv PlatformRunnerConstants where
   configElemL = lens gameConstants (\x y -> x { gameConstants = y })
 
+
+--------------------------------------------------------------------------------
+data EnvWithLevel = EnvWithLevel
+  { platformRunnerEnv :: PlatformRunnerEnv
+  , levelMetadata     :: LevelMetadata
+  , pullUpdate        :: PullUpdate IO
+  }
+
+instance HasConfigElem EnvWithLevel EnvWithLevel where
+  configElemL = id
+
+instance HasConfigElem EnvWithLevel PlatformRunnerEnv where
+  configElemL = lens platformRunnerEnv (\x y -> x { platformRunnerEnv = y })
+
+instance HasConfigElem EnvWithLevel AppBaseSettingsEnv where
+  configElemL =
+    configElemL . configElemL @PlatformRunnerEnv @AppBaseSettingsEnv
+
+instance HasConfigElem EnvWithLevel AppEnv where
+  configElemL = configElemL . configElemL @AppBaseSettingsEnv @AppEnv
+
+instance HasLogFunc EnvWithLevel where
+  logFuncL = configElemL . configElemL @AppEnv @LogFunc
+
+instance HasProcessContext EnvWithLevel where
+  processContextL = configElemL . configElemL @AppEnv @ProcessContext
+
+instance HasConfigElem EnvWithLevel CliOptions where
+  configElemL = configElemL . configElemL @AppEnv @CliOptions
+
+instance HasConfigElem EnvWithLevel OptionVerboseFlag where
+  configElemL = configElemL . configElemL @CliOptions @OptionVerboseFlag
+
+instance HasConfigElem EnvWithLevel OptionOverrideSettingsPath where
+  configElemL =
+    configElemL . configElemL @CliOptions @OptionOverrideSettingsPath
+
+instance HasConfigElem EnvWithLevel ScreenSize where
+  configElemL = configElemL . configElemL @AppEnv @ScreenSize
+
+instance HasConfigElem EnvWithLevel ConfigDir where
+  configElemL = configElemL . configElemL @AppEnv @ConfigDir
+
+instance HasConfigElem EnvWithLevel SettingsRef where
+  configElemL = configElemL . configElemL @AppBaseSettingsEnv @SettingsRef
+
+instance HasConfigElem EnvWithLevel PlatformRunnerConstants where
+  configElemL =
+    configElemL . configElemL @PlatformRunnerEnv @PlatformRunnerConstants
+
+instance HasConfigElem LevelMetadata LevelMetadata where
+  configElemL = id
+
+instance HasConfigElem EnvWithLevel LevelMetadata where
+  configElemL = lens levelMetadata (\x y -> x { levelMetadata = y })
+
+instance HasConfigElem (PullUpdate IO) (PullUpdate IO) where
+  configElemL = id
+
+instance HasConfigElem EnvWithLevel (PullUpdate IO) where
+  configElemL = lens pullUpdate (\x y -> x { pullUpdate = y })
+
+-- instance MonadIO m => HasConfigElem (EnvWithLevel m') (PullUpdate m)
+
+
+--------------------------------------------------------------------------------
+
+pullLevelData
+  :: (HasConfigElem config (PullUpdate IO), MonadReader config m, MonadIO m)
+  => Double
+  -> m ItemDescriptorResult
+pullLevelData d = do
+  f <- viewConfig @(PullUpdate IO)
+  liftIO $ f d
+
+-- instance HasConfigElem env (PullUpdate (RIO env)) => HasLevel env (RIO env)
+
+-- instance HasConfigElem EnvWithLevel (PullUpdate (RIO EnvWithLevel)) where
+--   configElemL =
+--     configElemL
+--       . configElemL @EnvWithLevel @(PullUpdate (RIO EnvWithLevel))
+
 --------------------------------------------------------------------------------
 instance HasStateRef Settings AppBaseSettingsEnv where
   stateRefL = lens appSettingsRef (\x y -> x { appSettingsRef = y })
 
 instance HasStateRef Settings PlatformRunnerEnv where
   stateRefL = configElemL @PlatformRunnerEnv @SettingsRef . stateRefL
+
+instance HasStateRef Settings EnvWithLevel where
+  stateRefL = configElemL @EnvWithLevel @SettingsRef . stateRefL

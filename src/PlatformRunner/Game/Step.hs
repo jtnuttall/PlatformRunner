@@ -1,22 +1,19 @@
+{-# LANGUAGE NumericUnderscores #-}
 module PlatformRunner.Game.Step where
 
 import           Apecs
 import           Apecs.Gloss                    ( Camera(Camera) )
 import           Apecs.Physics
+import           Common.Import
+import           Linear                         ( Epsilon(nearZero) )
 import           PlatformRunner.Components.Entity
 import           PlatformRunner.Components.Global
 import           PlatformRunner.Env
 import           PlatformRunner.Game.Collision
 import           PlatformRunner.Game.Constant
+import           PlatformRunner.Game.World      ( PlatformWorld(PlatformWorld) )
 import           PlatformRunner.Level
-import           PlatformRunner.Prelude
-import           PlatformRunner.Settings        ( Settings
-                                                , getGameDimensions
-                                                )
 import           PlatformRunner.Types
-import           System.Random.SplitMix         ( SMGen
-                                                , newSMGen
-                                                )
 
 baseViewDimensions :: Dimensions
 baseViewDimensions = Dimensions (V2 80 45)
@@ -49,10 +46,10 @@ newPlayer levelPlayerStartPos = do
 newPlatform
   :: (HasConfigElem env PlatformRunnerConstants)
   => V2 Double
-  -> RelativeObjectDesc
+  -> RelativeItemDescriptor
   -> PlatformRunnerSystem env (V2 Double)
 newPlatform lastPos = \case
-  PlatformDesc {..} -> do
+  PlatformDescriptor {..} -> do
     constants   <- lift $ viewConfig @PlatformRunnerConstants
 
     platformEty <- newEntity
@@ -64,43 +61,12 @@ newPlatform lastPos = \case
 
     return $ lastPos + offset
 
--- initializeLevel
---   :: (HasLogFunc env, HasAppScreenSize env, HasGameConstants env)
---   => (SMGen -> Level (RIO env))
---   -> RIO env ()
--- initializeLevel levelGen = do
---   constants           <- view gameConstantsL
---   g                   <- liftIO newSMGen
---   Dimensions gameDims <- getGameDimensions
---   levelRef            <- view levelRefL
---   firstScreen         <- fetchNextScreen (fromIntegral <$> gameDims)
---                                          playerStartPos
---                                          (cameraScaleFactor constants)
---                                          (levelGen g)
-
---   writeSomeRef levelRef (Just firstScreen)
-
--- getNextScreen
---   :: (HasLogFunc env, HasAppScreenSize env, HasGameConstants env)
---   => PlatformRunnerSystem env ()
--- getNextScreen = do
---   constants           <- lift $ view gameConstantsL
---   Dimensions gameDims <- lift getGameDimensions
---   levelRef            <- lift $ view levelRefL
---   expectLevel         <- readSomeRef levelRef
---   Camera cameraPos _  <- get global
-
---   case expectLevel of
---     Nothing    -> throwString "Level was unexpectedly Nothing"
---     Just level -> do
---       screen <- lift $ fetchNextScreen (fromIntegral <$> gameDims)
---                                        (realToFrac <$> cameraPos)
---                                        (cameraScaleFactor constants)
---                                        level
---       lift $ writeSomeRef levelRef (Just screen)
-
 initializeSystem
-  :: (HasLogFunc env, HasConfigElem env PlatformRunnerConstants)
+  :: ( HasLogFunc env
+     , HasConfigElem env PlatformRunnerConstants
+     , HasConfigElem env LevelMetadata
+     , HasConfigElem env (PullUpdate IO)
+     )
   => PlatformRunnerSystem env ()
 initializeSystem = do
   constants <- lift viewConfig
@@ -115,14 +81,43 @@ initializeSystem = do
     )
 
   -- initialLevel <- lift $ initializeLevel flatWorld
+  -- levelData    <- lift $ pullLevelData 200
 
-  -- playerEty    <- newPlayer (levelPlayerStartPos . metadata $ initialLevel)
+  -- initialLevel <- case levelData of
+  --   Closed     -> throwString "closed"
+  --   Waiting    -> throwString "waiting"
+  --   Result vec -> return vec
 
--- foldM_ newPlatform (V2 0 0) (levelData initialLevel)
+  syncLevelData
 
-  cHandlerEtys <- newEntity =<< createCollisionHandler
+
+  initialPosition <- lift $ levelPlayerStartPos <$> viewConfig @LevelMetadata
+  playerEty       <- newPlayer initialPosition
+
+
+  cHandlerEtys    <- newEntity =<< createCollisionHandler
 
   return ()
+
+syncLevelData
+  :: ( HasConfigElem env PlatformRunnerConstants
+     , HasConfigElem env (PullUpdate IO)
+     )
+  => PlatformRunnerSystem env ()
+syncLevelData = do
+  Time t            <- get global
+  Camera (V2 x _) _ <- get global
+
+  when (nearZero (t / 10_000)) $ do
+    levelData    <- lift $ pullLevelData 200
+
+    initialLevel <- case levelData of
+      Closed     -> throwString "closed"
+      Waiting    -> throwString "waiting"
+      Result vec -> return vec
+
+    foldM_ newPlatform (V2 0 0) initialLevel
+
 
 clearPlatforms :: PlatformRunnerSystem env ()
 clearPlatforms = do
@@ -139,9 +134,15 @@ moveCamera :: PlatformRunnerSystem env ()
 moveCamera = cmapM_ $ \(Player, Position p) ->
   modify global (\(Camera _ s) -> Camera (realToFrac <$> p) s)
 
-step :: Double -> PlatformRunnerSystem env ()
+step
+  :: ( HasConfigElem env (PullUpdate IO)
+     , HasConfigElem env PlatformRunnerConstants
+     )
+  => Double
+  -> PlatformRunnerSystem env ()
 step dT = do
   incTime dT
   moveCamera
   -- clearPlatforms
   stepPhysics dT
+  syncLevelData
