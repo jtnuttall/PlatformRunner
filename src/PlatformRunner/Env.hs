@@ -3,16 +3,12 @@
 module PlatformRunner.Env where
 
 import           Common.Import
-import           Control.Lens            hiding ( view )
 import           PlatformRunner.Game.Constant   ( PlatformRunnerConstants )
 import           PlatformRunner.Level           ( LevelMetadata
                                                 , PullUpdate
-                                                , RelativeItemDescriptor
                                                 )
 import           PlatformRunner.Level.Internal.STM
-                                                ( ItemDescriptorResult
-                                                , PullUpdate
-                                                )
+                                                ( ItemDescriptorResult )
 import           PlatformRunner.Settings.Internal
                                                 ( Settings(..) )
 import           PlatformRunner.Types           ( Dimensions )
@@ -267,8 +263,6 @@ instance HasConfigElem (PullUpdate IO) (PullUpdate IO) where
 instance HasConfigElem EnvWithLevel (PullUpdate IO) where
   configElemL = lens pullUpdate (\x y -> x { pullUpdate = y })
 
--- instance MonadIO m => HasConfigElem (EnvWithLevel m') (PullUpdate m)
-
 
 --------------------------------------------------------------------------------
 
@@ -279,13 +273,6 @@ pullLevelData
 pullLevelData d = do
   f <- viewConfig @(PullUpdate IO)
   liftIO $ f d
-
--- instance HasConfigElem env (PullUpdate (RIO env)) => HasLevel env (RIO env)
-
--- instance HasConfigElem EnvWithLevel (PullUpdate (RIO EnvWithLevel)) where
---   configElemL =
---     configElemL
---       . configElemL @EnvWithLevel @(PullUpdate (RIO EnvWithLevel))
 
 --------------------------------------------------------------------------------
 instance HasStateRef Settings AppBaseSettingsEnv where
