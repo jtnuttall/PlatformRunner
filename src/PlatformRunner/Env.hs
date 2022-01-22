@@ -21,7 +21,6 @@ import           RIO.Process                    ( HasProcessContext(..)
 class HasConfigElem config prop where
   configElemL :: Lens' config prop
 
-
 viewConfig
   :: forall prop config m
    . HasConfigElem config prop
@@ -266,6 +265,7 @@ instance HasConfigElem EnvWithLevel (PullUpdate IO) where
 
 --------------------------------------------------------------------------------
 
+-- | Pull the next d meters of level data
 pullLevelData
   :: (HasConfigElem config (PullUpdate IO), MonadReader config m, MonadIO m)
   => Double

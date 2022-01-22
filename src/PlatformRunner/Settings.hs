@@ -36,6 +36,7 @@ import           RIO.State
 
 
 import           Data.Bitraversable             ( bimapM )
+import           Data.Coerce                    ( coerce )
 import           Data.Yaml               hiding ( ParseException )
 import qualified Data.Yaml                     as Yaml
                                                 ( ParseException )
@@ -282,7 +283,7 @@ getPlatformRunnerParameters = do
   difficulty <- view difficultyL <$> get
   let parameters = platformRunnerConstants difficulty
 
-  Dimensions gameDims <- getGameDimensions
+  Dimensions gameDims <- coerce <$> getGameDimensions
 
   let V2 scaleX _ = (fromIntegral <$> gameDims) / defaultViewDimensions
 

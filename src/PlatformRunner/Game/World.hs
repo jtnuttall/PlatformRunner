@@ -16,6 +16,8 @@ makeWorld "PlatformWorld"
   , ''IsFlying
   , ''Score
   , ''Time
+  , ''LastReceivedPlatform
+  , ''WaitingForPlatforms
   , ''Physics
   , ''Camera
   ]

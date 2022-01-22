@@ -4,7 +4,8 @@ module PlatformRunner.Game.Step where
 import           Apecs
 import           Apecs.Gloss                    ( Camera(Camera) )
 import           Apecs.Physics
-import           Common.Import
+import           Common.Import           hiding ( set )
+import           Data.Coerce                    ( coerce )
 import           Linear                         ( Epsilon(nearZero) )
 import           PlatformRunner.Components.Entity
 import           PlatformRunner.Components.Global
@@ -13,6 +14,7 @@ import           PlatformRunner.Game.Collision
 import           PlatformRunner.Game.Constant
 import           PlatformRunner.Game.World      ( PlatformWorld(PlatformWorld) )
 import           PlatformRunner.Level
+import           PlatformRunner.Settings        ( getGameDimensions )
 import           PlatformRunner.Types
 
 baseViewDimensions :: Dimensions
@@ -66,6 +68,7 @@ initializeSystem
      , HasConfigElem env PlatformRunnerConstants
      , HasConfigElem env LevelMetadata
      , HasConfigElem env (PullUpdate IO)
+     , HasConfigElem env ScreenSize
      )
   => PlatformRunnerSystem env ()
 initializeSystem = do
@@ -75,49 +78,59 @@ initializeSystem = do
 
   modify global $ \(Gravity _) -> Gravity (gravityConstant constants)
 
-  cameraEty <- newEntity
+  newEntity_
     (Camera (realToFrac <$> playerStartPos)
             (realToFrac $ cameraScaleFactor constants)
     )
 
-  -- initialLevel <- lift $ initializeLevel flatWorld
-  -- levelData    <- lift $ pullLevelData 200
-
-  -- initialLevel <- case levelData of
-  --   Closed     -> throwString "closed"
-  --   Waiting    -> throwString "waiting"
-  --   Result vec -> return vec
-
   syncLevelData
 
-
   initialPosition <- lift $ levelPlayerStartPos <$> viewConfig @LevelMetadata
-  playerEty       <- newPlayer initialPosition
+  void $ newPlayer initialPosition
 
 
-  cHandlerEtys    <- newEntity =<< createCollisionHandler
+  newEntity_ =<< createCollisionHandler
 
   return ()
+
+needPlatformsUntil
+  :: (HasConfigElem env ScreenSize) => PlatformRunnerSystem env (Maybe Double)
+needPlatformsUntil = do
+  Camera cameraPos _                        <- get global
+  Dimensions           gameDims             <- lift getGameDimensions
+  LastReceivedPlatform lastRecievedPlatform <- get global
+
+  let V2 cameraX   _ = realToFrac <$> cameraPos
+      V2 gameWidth _ = fromIntegral <$> gameDims
+      V2 lastX     _ = lastRecievedPlatform
+      triggerX       = cameraX + gameWidth
+
+  return
+    $ if triggerX > lastX then Just (cameraX + (gameWidth * 1.5)) else Nothing
 
 syncLevelData
   :: ( HasConfigElem env PlatformRunnerConstants
      , HasConfigElem env (PullUpdate IO)
+     , HasConfigElem env ScreenSize
+     , HasLogFunc env
      )
   => PlatformRunnerSystem env ()
-syncLevelData = do
-  Time t            <- get global
-  Camera (V2 x _) _ <- get global
+syncLevelData = needPlatformsUntil >>= \case
+  Nothing    -> lift $ logError "level data synced when no platforms needed"
+  Just needX -> do
+    LastReceivedPlatform lastRecievedPlatform <- get global
 
-  when (nearZero (t / 10_000)) $ do
-    levelData    <- lift $ pullLevelData 200
+    let V2 lastX lastY = lastRecievedPlatform
 
-    initialLevel <- case levelData of
-      Closed     -> throwString "closed"
-      Waiting    -> throwString "waiting"
-      Result vec -> return vec
-
-    foldM_ newPlatform (V2 0 0) initialLevel
-
+    lift (pullLevelData needX) >>= \case
+      Closed  -> throwString "mailbox is closed :("
+      Waiting -> do
+        lift $ logDebug "waiting..."
+        return ()
+      Result levelData -> do
+        newLastPos <- foldM newPlatform (V2 lastX lastY) levelData
+        set global (WaitingForPlatforms False)
+        set global (LastReceivedPlatform newLastPos)
 
 clearPlatforms :: PlatformRunnerSystem env ()
 clearPlatforms = do
@@ -137,12 +150,19 @@ moveCamera = cmapM_ $ \(Player, Position p) ->
 step
   :: ( HasConfigElem env (PullUpdate IO)
      , HasConfigElem env PlatformRunnerConstants
+     , HasConfigElem env ScreenSize
+     , HasLogFunc env
      )
   => Double
   -> PlatformRunnerSystem env ()
 step dT = do
-  incTime dT
-  moveCamera
-  -- clearPlatforms
-  stepPhysics dT
-  syncLevelData
+  WaitingForPlatforms waiting <- get global
+  needNext                    <- isJust <$> needPlatformsUntil
+
+  when needNext syncLevelData
+
+  unless waiting $ do
+    incTime dT
+    moveCamera
+    -- clearPlatforms
+    stepPhysics dT
